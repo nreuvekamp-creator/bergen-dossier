@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<title>Bergen met Tess</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;0,700;1,400&family=Caveat:wght@500;700&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+  /* Layout: een statusmap (manilla) met losse dossiervellen per sectie, elk met een gekleurde ruiter;
+     op brede schermen staat de patiënt (figuur + meters) als vaste kaart rechts. */
+  :root {
+    --folder: #e8d6ae; --folder-edge: #d2b98a;
+    --paper: #fffbf2; --paper-2: #f7efdc; --label: #fffef9;
+    --ink: #2d2620; --ink-2: #5a4e42; --ink-3: #85786a;
+    --line: #e6dac2; --rule: #d6c5a2;
+    --pen: #27458a; --stamp: #b2382b; --seal: #9a2a1f; --seal-hi: #d0584a;
+    --clay: #c8673f; --mustard: #d99a3a;
+    --ok: #3d6e33; --ok-bg: #e2ecd3; --warn-fg: #6c4512; --warn-bg: #f5e2bd;
+    --off-bg: #ece6d9; --off-fg: #7d7468;
+    --track: #eadfc8; --shadow: rgba(84, 52, 20, .22); --hi: rgba(255, 255, 255, .7);
+    --s-hart: #c4553f; --s-long: #4b82a3; --s-maag: #c98a2b; --s-zenuw: #6b7aa6; --s-geh: #5a9468;
+    --f-body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --f-type: "Courier Prime", "Courier New", ui-monospace, monospace;
+    --f-hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --folder: #1e1913; --folder-edge: #2e261c;
+      --paper: #2a241c; --paper-2: #322a20; --label: #3a3126;
+      --ink: #f1e7d6; --ink-2: #cdbfa9; --ink-3: #a0927e;
+      --line: #3e3427; --rule: #4c4031;
+      --pen: #93b0ee; --stamp: #ec7a68; --seal: #a8382b; --seal-hi: #e06a59;
+      --clay: #e08a63; --mustard: #e6b25a;
+      --ok: #a9d394; --ok-bg: #26371f; --warn-fg: #f2cd8f; --warn-bg: #3d2e15;
+      --off-bg: #2c2822; --off-fg: #9a8f80;
+      --track: #3a3125; --shadow: rgba(0, 0, 0, .5); --hi: rgba(255, 255, 255, .06);
+      --s-hart: #e2795f; --s-long: #77aed0; --s-maag: #e2a94c; --s-zenuw: #9aa7d4; --s-geh: #84c194;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --folder: #1e1913; --folder-edge: #2e261c;
+    --paper: #2a241c; --paper-2: #322a20; --label: #3a3126;
+    --ink: #f1e7d6; --ink-2: #cdbfa9; --ink-3: #a0927e;
+    --line: #3e3427; --rule: #4c4031;
+    --pen: #93b0ee; --stamp: #ec7a68; --seal: #a8382b; --seal-hi: #e06a59;
+    --clay: #e08a63; --mustard: #e6b25a;
+    --ok: #a9d394; --ok-bg: #26371f; --warn-fg: #f2cd8f; --warn-bg: #3d2e15;
+    --off-bg: #2c2822; --off-fg: #9a8f80;
+    --track: #3a3125; --shadow: rgba(0, 0, 0, .5); --hi: rgba(255, 255, 255, .06);
+    --s-hart: #e2795f; --s-long: #77aed0; --s-maag: #e2a94c; --s-zenuw: #9aa7d4; --s-geh: #84c194;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--folder); color: var(--ink);
+    font: 16px/1.55 var(--f-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 56px;
+    overflow-x: hidden;
+  }
+  h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--pen); }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
+  .typed { font-family: var(--f-type); }
+  .hand { font-family: var(--f-hand); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* Sticky kop met ruiters */
+  .topbar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 8px 0;
+    background: var(--folder); border-bottom: 1px solid var(--folder-edge);
+  }
+  .topbar-in { max-width: 1120px; margin: 0 auto; }
+  .toprow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand { font-family: var(--f-type); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+  .brand small { font-weight: 400; color: var(--ink-2); }
+  @media (max-width: 440px) { .brand small { display: none; } }
+  .toptotal { display: flex; align-items: center; gap: 8px; font-family: var(--f-type); font-size: 14px; }
+  .minibar { width: 64px; height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .minibar i { display: block; height: 100%; background: var(--clay); border-radius: 99px; transition: width .6s ease; }
+  .testlabel { font-family: var(--f-type); font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--stamp); border: 1.5px solid var(--stamp); border-radius: 4px; padding: 0 5px; }
+  .ruiters { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-top: 8px; padding-top: 2px; }
+  .ruiters::-webkit-scrollbar { display: none; }
+  .ruiter {
+    flex: none; border: 0; cursor: pointer; padding: 5px 11px 6px; border-radius: 8px 8px 0 0;
+    font-family: var(--f-type); font-size: 13px; color: var(--ink);
+    background: var(--paper-2); box-shadow: inset 0 3px 0 var(--tab, var(--rule));
+  }
+  .ruiter[aria-current="true"] { background: var(--paper); font-weight: 700; }
+
+  /* Hoofdlayout */
+  .layout { max-width: 1120px; margin: 0 auto; padding-top: 18px; display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) {
+    .layout { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; column-gap: 32px; }
+    .layout > .vel, .layout > .sticker { grid-column: 1; }
+    #status { grid-column: 2; grid-row: 1 / span 12; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); }
+  }
+
+  /* Patiëntsticker */
+  .sticker {
+    background: var(--label); border-radius: 6px; padding: 12px 14px 10px;
+    box-shadow: 0 1px 0 var(--hi) inset, 0 8px 18px -12px var(--shadow), 0 0 0 1px var(--line);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; font-family: var(--f-type); font-size: 14px;
+    max-width: 560px; transform: rotate(-.6deg);
+  }
+  .sticker dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1px 10px; }
+  .sticker dt { color: var(--ink-3); }
+  .sticker dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+  .barcode { width: 34px; align-self: stretch; border-radius: 2px;
+    background: repeating-linear-gradient(180deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px, var(--ink) 8px 11px, transparent 11px 13px); opacity: .85; }
+  .sticker .pnr { grid-column: 1 / -1; font-size: 12px; color: var(--ink-3); letter-spacing: .08em; }
+
+  /* Dossiervel */
+  .vel {
+    position: relative; background: var(--paper); border-radius: 4px 12px 12px 12px; padding: 22px 18px 20px; margin-top: 26px;
+    box-shadow: 0 1px 0 var(--hi) inset, 0 10px 24px -16px var(--shadow), 0 0 0 1px var(--line);
+    scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 96px);
+  }
+  .vel > .tab {
+    position: absolute; left: 0; bottom: 100%; padding: 4px 14px 3px; border-radius: 10px 10px 0 0;
+    background: var(--paper); font-family: var(--f-type); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2);
+    box-shadow: inset 0 3px 0 var(--tab, var(--rule)), 0 -1px 0 var(--line), 1px 0 0 var(--line), -1px 0 0 var(--line);
+  }
+  .vel h2 { font-family: var(--f-type); font-size: 21px; font-weight: 700; margin-bottom: 4px; }
+  .vel .lead { color: var(--ink-2); font-size: 15px; margin-bottom: 14px; max-width: 62ch; }
+  .vel h3 { font-family: var(--f-type); font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin: 18px 0 6px; }
+  .velgrid { display: grid; gap: 0 22px; }
+  .field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 9px 0; border-top: 1px dashed var(--rule); }
+  .field:first-child { border-top: 0; }
+  @media (min-width: 560px) { .field { grid-template-columns: 170px minmax(0, 1fr); gap: 14px; } }
+  .field > b { font-family: var(--f-type); font-size: 13.5px; font-weight: 700; color: var(--ink-2); padding-top: 1px; }
+  .field > div { min-width: 0; max-width: 62ch; }
+  .fict { font-size: 13px; color: var(--ink-3); font-style: italic; }
+
+  /* Voorgeschiedenis: tabel referentiepatiënt */
+  .tablewrap { overflow-x: auto; margin-top: 6px; }
+  table.vg { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  .vg th { text-align: left; font-family: var(--f-type); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 400; padding: 4px 8px 6px 0; border-bottom: 1.5px solid var(--rule); }
+  .vg td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .vg td:first-child { font-family: var(--f-type); color: var(--ink-3); width: 2.2em; }
+  .vg td.d { font-family: var(--f-type); white-space: nowrap; color: var(--ink-2); }
+  .vg .effect { display: block; font-size: 13px; color: var(--ok); }
+
+  /* Differentiaaldiagnose + stempel */
+  ol.dd { margin: 4px 0 0; padding: 0; list-style: none; counter-reset: dd; display: grid; gap: 10px; }
+  ol.dd li { counter-increment: dd; display: grid; grid-template-columns: 2em minmax(0, 1fr); gap: 4px; }
+  ol.dd li::before { content: counter(dd) "."; font-family: var(--f-type); color: var(--ink-3); }
+  ol.dd b { font-weight: 700; }
+  ol.dd .verdict { font-family: var(--f-type); font-size: 12.5px; color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; margin-left: 6px; }
+  .stempel {
+    margin: 22px auto 4px; width: fit-content; max-width: 100%; text-align: center; color: var(--stamp);
+    border: 3px double var(--stamp); border-radius: 8px; padding: 8px 18px 10px; transform: rotate(-3deg);
+    font-family: var(--f-type);
+  }
+  .stempel .k { font-size: 13px; letter-spacing: .3em; font-weight: 700; }
+  .stempel .v { font-size: 24px; font-weight: 700; font-style: italic; line-height: 1.15; margin-top: 2px; }
+  .stempel .s { font-size: 12px; letter-spacing: .04em; }
+  @media (prefers-reduced-motion: no-preference) {
+    .stempel.in { animation: stamp .45s cubic-bezier(.3, 1.6, .5, 1) both; }
+    @keyframes stamp { from { transform: rotate(-3deg) scale(1.35); opacity: 0; } to { transform: rotate(-3deg) scale(1); opacity: 1; } }
+  }
+
+  /* Ochtendvisite */
+  .visite { display: grid; gap: 12px; }
+  .wx { display: flex; gap: 14px; align-items: center; }
+  .wx .icon { font-size: 34px; line-height: 1; }
+  .wx .state { font-family: var(--f-type); font-size: 20px; font-weight: 700; }
+  .wx .src { font-size: 13.5px; color: var(--ink-2); }
+  .seg { display: inline-flex; border-radius: 10px; background: var(--paper-2); padding: 3px; gap: 3px; box-shadow: inset 0 0 0 1px var(--line); flex-wrap: wrap; }
+  .seg button { border: 0; background: transparent; border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 14px; color: var(--ink-2); }
+  .seg button[aria-pressed="true"] { background: var(--paper); color: var(--ink); font-weight: 700; box-shadow: 0 1px 3px var(--shadow); }
+  .beleid { font-size: 14.5px; background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 9px 12px; }
+  .beleid.droog { background: var(--ok-bg); color: var(--ok); }
+
+  /* Status: figuur + meters */
+  #status { background: var(--paper); border-radius: 14px; padding: 16px; box-shadow: 0 1px 0 var(--hi) inset, 0 10px 24px -16px var(--shadow), 0 0 0 1px var(--line); }
+  .statustop { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 12px; align-items: center; }
+  .fig { aspect-ratio: 1; max-width: 100%; }
+  .fig > div { width: 100%; height: 100%; }
+  .fig svg, .fig img { width: 100%; height: 100%; display: block; object-fit: contain; }
+  @media (prefers-reduced-motion: no-preference) { .fig > div:not([hidden]) { animation: figin .5s ease both; } @keyframes figin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } } }
+  .total .lbl { font-family: var(--f-type); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .total .big { font-family: var(--f-type); font-size: 54px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .total .big small { font-size: 26px; }
+  .total .fase { font-size: 14.5px; color: var(--ink-2); margin-top: 4px; }
+  .meters { display: grid; gap: 9px; margin-top: 14px; }
+  .meter .row { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  .meter .row span:last-child { font-family: var(--f-type); font-variant-numeric: tabular-nums; }
+  .bar { height: 10px; border-radius: 99px; background: var(--track); overflow: hidden; margin-top: 3px; box-shadow: inset 0 1px 2px var(--shadow); }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--c); box-shadow: inset 0 2px 0 var(--hi); transition: width .7s cubic-bezier(.3, 1.2, .5, 1); }
+  .statusnote { font-size: 13px; color: var(--ink-3); margin-top: 12px; }
+
+  /* Behandelplan */
+  .systeem { margin-top: 22px; }
+  .systeem:first-of-type { margin-top: 8px; }
+  .syshead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 2px solid var(--c); padding-bottom: 4px; margin-bottom: 4px; flex-wrap: wrap; }
+  .syshead h3 { margin: 0; color: var(--ink); font-size: 14px; }
+  .syshead .pct { font-family: var(--f-type); font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-2); }
+  .sysbev { font-size: 14px; color: var(--ink-2); font-style: italic; margin-bottom: 8px; }
+  .kaart { border-top: 1px solid var(--line); padding: 14px 0; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; }
+  .kaart:first-of-type { border-top: 0; }
+  .vink { width: 24px; height: 24px; margin: 1px 0 0; accent-color: var(--ok); cursor: pointer; }
+  .kaart.done .ktitle { text-decoration: line-through; text-decoration-color: var(--ok); text-decoration-thickness: 2px; }
+  .ktop { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+  .ktitle { font-weight: 700; font-size: 16.5px; }
+  .kcost { font-family: var(--f-type); font-size: 13.5px; color: var(--ink-2); }
+  .kdesc { font-size: 15px; color: var(--ink-2); margin-top: 3px; max-width: 62ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; align-items: center; }
+  .chips a { font-size: 14px; font-weight: 700; text-decoration: none; }
+  .chips a:hover { text-decoration: underline; }
+  .pill { display: inline-block; font-size: 12.5px; font-weight: 700; padding: 3px 10px; border-radius: 99px; border: 0; cursor: pointer; background: var(--warn-bg); color: var(--warn-fg); }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .uitgesteld { display: none; font-family: var(--f-type); font-size: 12px; letter-spacing: -.01em; color: var(--off-fg); background: var(--off-bg); border-radius: 4px; padding: 2px 8px; margin-top: 6px; width: fit-content; }
+  .kaart.off:not(.done) .uitgesteld { display: block; }
+  .kaart.off:not(.done) .kbody > :not(.ktop):not(.uitgesteld) { opacity: .45; }
+  .kaart.off:not(.done) .ktitle, .kaart.off:not(.done) .kcost { color: var(--off-fg); }
+  .kaart.off:not(.done) .vink { cursor: not-allowed; }
+  .extra { margin-top: 10px; }
+  .extra summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--pen); width: fit-content; list-style-position: inside; }
+  .extra .exin { display: grid; gap: 8px; margin-top: 8px; }
+  .notelbl { font-family: var(--f-type); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  textarea.note {
+    width: 100%; min-height: 54px; resize: vertical; border-radius: 6px; border: 1px solid var(--rule); padding: 6px 10px;
+    font-family: var(--f-hand); font-size: 21px; line-height: 1.2; color: var(--pen); background: var(--paper);
+    background-image: repeating-linear-gradient(180deg, transparent 0 24px, var(--line) 24px 25px); background-attachment: local;
+  }
+  .row2 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn { font-size: 14px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--rule); background: var(--paper-2); color: var(--ink); cursor: pointer; }
+  .btn:hover { border-color: var(--ink-3); }
+  .fotobtn { position: relative; overflow: hidden; display: inline-block; }
+  .fotobtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+  .thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 3px solid var(--label); box-shadow: 0 3px 8px -3px var(--shadow); transform: rotate(1.5deg); }
+  .msg { font-size: 13px; color: var(--ink-3); flex-basis: 100%; }
+  .msg:empty { display: none; }
+  .agenda input { font-size: 14px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--rule); background: var(--paper); max-width: 100%; }
+
+  /* Decursus */
+  .decursus { display: grid; gap: 0; }
+  .dec { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px dashed var(--rule); }
+  .dec:first-child { border-top: 0; }
+  .dec .when { font-family: var(--f-type); font-size: 13px; color: var(--ink-3); }
+  .dec .what { font-weight: 700; }
+  .dec .hand { font-size: 21px; color: var(--pen); line-height: 1.2; overflow-wrap: anywhere; }
+  .dec img { width: 110px; border-radius: 4px; border: 3px solid var(--label); margin-top: 6px; box-shadow: 0 3px 8px -3px var(--shadow); }
+  .leeg { font-size: 14.5px; color: var(--ink-3); font-style: italic; }
+
+  /* Recepten */
+  .recepten { display: grid; gap: 18px; }
+  @media (min-width: 700px) { .recepten { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .rx {
+    position: relative; background: var(--label); border-radius: 3px; padding: 16px 16px 18px;
+    box-shadow: 0 1px 0 var(--hi) inset, 0 10px 20px -14px var(--shadow), 0 0 0 1px var(--line);
+    background-image: linear-gradient(var(--label), var(--label)), repeating-linear-gradient(90deg, var(--rule) 0 6px, transparent 6px 10px);
+    background-size: 100% calc(100% - 4px), 100% 1.5px; background-position: top, bottom; background-repeat: no-repeat;
+  }
+  .rxhead { display: flex; justify-content: space-between; gap: 10px; font-family: var(--f-type); font-size: 12px; color: var(--ink-3); border-bottom: 1px solid var(--line); padding-bottom: 6px; letter-spacing: .04em; }
+  .rxsym { font-family: var(--f-type); font-size: 34px; font-weight: 700; color: var(--ink); line-height: 1; margin: 12px 0 4px; }
+  .rxsym span { font-size: 16px; vertical-align: super; }
+  .rx .script { font-family: var(--f-hand); font-size: 25px; line-height: 1.15; color: var(--pen); }
+  .rx .sig { font-family: var(--f-hand); font-size: 22px; color: var(--pen); margin-top: 6px; }
+  .rx .info { font-size: 14.5px; color: var(--ink-2); margin-top: 10px; display: grid; gap: 6px; }
+  .rx .signer { margin-top: 14px; display: flex; justify-content: space-between; align-items: end; gap: 10px; font-size: 12.5px; color: var(--ink-3); font-family: var(--f-type); }
+  .rx .signer .hand { font-size: 26px; color: var(--pen); line-height: 1; }
+  .sealed { text-align: center; padding: 18px 8px 8px; display: grid; justify-items: center; gap: 10px; }
+  .lak {
+    width: 74px; height: 74px; border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%;
+    background: radial-gradient(circle at 35% 30%, var(--seal-hi), var(--seal) 62%);
+    box-shadow: 0 0 0 5px var(--seal), 0 0 0 6px var(--shadow), 0 6px 12px -4px var(--shadow), inset 0 -4px 8px rgba(0,0,0,.25);
+    display: grid; place-items: center; color: var(--label); font-family: var(--f-type); font-weight: 700; font-size: 26px;
+  }
+  .lak span { width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--seal-hi); display: grid; place-items: center; }
+  .sealed p { font-size: 15px; color: var(--ink-2); max-width: 30ch; }
+  .sealed .when { font-family: var(--f-type); font-size: 13px; color: var(--ink-3); }
+  .opties { display: grid; gap: 8px; margin-top: 10px; }
+  .optie { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; padding: 10px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer; background: var(--paper); }
+  .optie:has(input:checked) { border-color: var(--pen); box-shadow: inset 0 0 0 1px var(--pen); }
+  .optie input { margin: 3px 0 0; accent-color: var(--pen); width: 18px; height: 18px; }
+  .optie b { display: block; }
+  .optie small { display: block; font-size: 13.5px; color: var(--ink-2); }
+  .behandeld { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--rule); font-weight: 700; cursor: pointer; }
+  .behandeld input { width: 22px; height: 22px; accent-color: var(--ok); }
+
+  /* Ontslagbrief */
+  .brief { background: var(--label); border-radius: 3px; padding: 22px 18px; box-shadow: 0 0 0 1px var(--line), 0 12px 24px -18px var(--shadow); font-size: 15.5px; }
+  .briefhead { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-family: var(--f-type); font-size: 13px; color: var(--ink-2); border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 14px; }
+  .briefhead b { color: var(--ink); font-size: 15px; display: block; }
+  .brief h4 { font-family: var(--f-type); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin: 16px 0 4px; }
+  .brief p { max-width: 64ch; }
+  .brief ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+  .brief .noot { font-family: var(--f-hand); font-size: 20px; color: var(--pen); display: block; }
+  .brief .fotos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .brief .fotos img { width: 96px; height: 96px; object-fit: cover; border-radius: 3px; border: 3px solid var(--paper); box-shadow: 0 2px 6px -2px var(--shadow); }
+  .oordeel { font-family: var(--f-type); font-weight: 700; font-size: 19px; color: var(--ok); }
+  .handtekening { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 22px; font-size: 13px; color: var(--ink-3); font-family: var(--f-type); }
+  .handtekening .hand { font-size: 30px; color: var(--pen); display: block; line-height: 1; border-bottom: 1px solid var(--rule); padding-bottom: 2px; margin-bottom: 4px; }
+  .dicht { display: grid; gap: 8px; }
+  .criteria { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: 14.5px; }
+  .criteria li { display: flex; gap: 8px; }
+  .criteria .bx { font-family: var(--f-type); }
+
+  footer { max-width: 1120px; margin: 30px auto 0; font-size: 13.5px; color: var(--ink-2); display: grid; gap: 4px; }
+  footer p { max-width: 70ch; }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+
+  @media print {
+    :root { --paper: #fff; --label: #fff; --folder: #fff; --ink: #000; --pen: #1b3a7a; }
+    body { background: #fff; padding: 0; }
+    .topbar, .sticker, #status, footer, .vel:not(#ontslag), .noprint { display: none !important; }
+    .layout { display: block; padding: 0; }
+    #ontslag { box-shadow: none; margin: 0; padding: 0; }
+    #ontslag > .tab { display: none; }
+    .brief { box-shadow: none; padding: 0; }
+  }
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="toprow">
+      <div class="brand">Dossier Bergen <small>(geb. 1070)</small></div>
+      <div class="toptotal"><span id="testlabel" class="testlabel" hidden>TESTMODUS</span><div class="minibar" aria-hidden="true"><i id="miniBar" style="width:0%"></i></div><span class="num" id="miniPct">0%</span></div>
+    </div>
+    <nav class="ruiters" aria-label="Secties">
+      <button class="ruiter" data-go="anamnese" style="--tab:var(--clay)">Anamnese</button>
+      <button class="ruiter" data-go="onderzoek" style="--tab:var(--mustard)">Onderzoek</button>
+      <button class="ruiter" data-go="dd" style="--tab:var(--stamp)">Diagnose</button>
+      <button class="ruiter" data-go="visite" style="--tab:var(--s-long)">Visite</button>
+      <button class="ruiter" data-go="behandelplan" style="--tab:var(--s-geh)">Behandelplan</button>
+      <button class="ruiter" data-go="decursus" style="--tab:var(--pen)">Decursus</button>
+      <button class="ruiter" data-go="recepten" style="--tab:var(--seal)">Recepten</button>
+      <button class="ruiter" data-go="ontslag" style="--tab:var(--ink-3)">Ontslag</button>
+    </nav>
+  </div>
+</header>
+
+<main class="layout">
+  <div class="sticker" aria-label="Patiëntsticker">
+    <dl>
+      <dt>Patiënt</dt><dd>Bergen</dd>
+      <dt>Geb.</dt><dd>1070</dd>
+      <dt>Opname</dt><dd>20-10-2026</dd>
+      <dt>Afdeling</dt><dd>Vestland, kamer 5003</dd>
+      <dt>Beh. arts</dt><dd>Tess</dd>
+      <dt>Assistent</dt><dd>Niels</dd>
+    </dl>
+    <div class="barcode" aria-hidden="true"></div>
+    <div class="pnr num">PATIËNTNR. 1070-5003-NO</div>
+  </div>
+
+  <section class="vel" id="anamnese" style="--tab:var(--clay)">
+    <div class="tab">Anamnese</div>
+    <h2>Opnamegesprek</h2>
+    <p class="lead">Patiënt wordt opgenomen ter observatie en behandeling. Anamnese afgenomen door de assistent; de behandelend arts arriveert dinsdag 20 oktober om 16:50 op Flesland en neemt het beleid vanaf daar over.</p>
+    <div class="velgrid">
+      <div class="field"><b>Hoofdklacht</b><div>Aanhoudend tekort aan dates.</div></div>
+      <div class="field"><b>Beloop</b><div>Sinds augustus geen leuke dates meer gehouden. Klachten nemen geleidelijk toe, met name in de avonduren. Geen verbetering bij regen; die is er wel steeds.</div></div>
+      <div class="field"><b>Voorgeschiedenis</b><div>
+        Blanco. Ter vergelijking is een referentiepatiënt opgevraagd: <b>Nijmegen</b>. Nijmegen is klinisch gezond, en dat is goed te verklaren: in het voorjaar kreeg Nijmegen een reeks van zes interventies door dezelfde behandelend arts.
+        <div class="tablewrap">
+          <table class="vg">
+            <thead><tr><th>#</th><th>Interventie</th><th>Datum</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Café Boedels, gevolgd door een wandeling van 5 km</td><td class="d">n.b.</td></tr>
+              <tr><td>2</td><td>Picknickwandeling</td><td class="d">25-04</td></tr>
+              <tr><td>3</td><td>Ochtend op het terras bij De Tuinen</td><td class="d">30-04</td></tr>
+              <tr><td>4</td><td>Bordspellenavond bij De Witte Raaf</td><td class="d">17-05</td></tr>
+              <tr><td>5</td><td>Gala</td><td class="d">22-05</td></tr>
+              <tr><td>6</td><td>Dag aan het strand, met butter chicken<span class="effect">Voedingsinterventie met aantoonbaar effect.</span></td><td class="d">24-05</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+      <div class="field"><b>Etiologie</b><div>Vermoedelijk exogeen: het ontbreken van dates sinds augustus. Een endogene oorzaak is niet aangetoond; de patiënt staat er al sinds 1070 en was eerder wel in orde.</div></div>
+      <div class="field"><b>Medicatie</b><div>Geen.</div></div>
+      <div class="field"><b>Allergieën</b><div>Geen bekende allergieën. Verdraagt zon slecht door gebrek aan blootstelling.</div></div>
+      <div class="field"><b>Sociale anamnese</b><div>Woont tussen zeven bergen en de zee. Veel bezoek van cruiseschepen, weinig van belang.</div></div>
+      <div class="field"><b>Familieanamnese</b><div>Niet bijdragend.</div></div>
+    </div>
+  </section>
+
+  <section class="vel" id="onderzoek" style="--tab:var(--mustard)">
+    <div class="tab">Lichamelijk onderzoek</div>
+    <h2>Bevindingen</h2>
+    <p class="lead">Onderzoek verricht bij aankomst, bij daglicht voor zover beschikbaar.</p>
+    <div class="velgrid">
+      <div class="field"><b>Algemene indruk</b><div>Grijs, nat. Niet acuut ziek, wel duidelijk zonder plannen.</div></div>
+      <div class="field"><b>Temperatuur</b><div class="num">9 à 10 °C. Voor een stad aan de westkust in oktober niet afwijkend.</div></div>
+      <div class="field"><b>Huid</b><div>Vochtig, over het gehele oppervlak.</div></div>
+      <div class="field"><b>Inspectie</b><div>Houten gevels aan Bryggen intact, enigszins scheef; passend bij de leeftijd.</div></div>
+      <div class="field"><b>Bijzonderheden</b><div>Incidentie van toeristenvallen verhoogd, met name rond Torget. Eén toeristenval wordt in het behandelplan bewust voorgeschreven.</div></div>
+    </div>
+  </section>
+
+  <section class="vel" id="dd" style="--tab:var(--stamp)">
+    <div class="tab">Differentiaaldiagnose</div>
+    <h2>Differentiaaldiagnose</h2>
+    <ol class="dd">
+      <li><div><b>Regenachtig klimaat.</b> Constant aanwezig sinds de stichting in 1070; verklaart dus geen verandering. <span class="verdict">verworpen</span></div></li>
+      <li><div><b>Lichtgebrek door het seizoen.</b> Treedt elk najaar op en is nooit eerder gepaard gegaan met deze klachten. <span class="verdict">onvoldoende verklarend</span></div></li>
+      <li><div><b>Overbelasting door cruiseschepen.</b> Het seizoen loopt af, de klachten niet. <span class="verdict">verworpen</span></div></li>
+      <li><div><b>Anerosis bergensis.</b> Past bij hoofdklacht, beloop en etiologie. Klinisch beeld: een tekort aan dates. <span class="verdict">werkdiagnose</span></div></li>
+    </ol>
+    <div class="stempel" id="stempel">
+      <div class="k">WERKDIAGNOSE</div>
+      <div class="v">Anerosis bergensis</div>
+      <div class="s">gr. an-, zonder; eros, liefde</div>
+    </div>
+    <p class="fict" style="text-align:center;margin-top:8px">Fictieve aandoening. Komt in geen enkel handboek voor, alleen in dit dossier.</p>
+  </section>
+
+  <section class="vel" id="visite" style="--tab:var(--s-long)">
+    <div class="tab">Ochtendvisite</div>
+    <h2 id="visiteKop">Ochtendvisite</h2>
+    <p class="lead" id="visiteDag"></p>
+    <div class="visite">
+      <div class="wx"><div class="icon" id="wxIcon" aria-hidden="true">☔</div><div><div class="state" id="wxState">Regen</div><div class="src" id="wxSrc"></div></div></div>
+      <div>
+        <div class="notelbl" id="segLbl" style="margin-bottom:4px">Weerstatus instellen</div>
+        <div class="seg" role="group" aria-labelledby="segLbl">
+          <button id="wxAuto" data-wx="">Automatisch</button>
+          <button id="wxDroog" data-wx="droog">☀️ Droog</button>
+          <button id="wxRegen" data-wx="regen">☔ Regen</button>
+        </div>
+      </div>
+      <div class="beleid" id="beleid"></div>
+    </div>
+  </section>
+
+  <aside id="status" aria-label="Actuele toestand van de patiënt">
+    <div class="statustop">
+      <div class="fig" id="fig">
+<!--FIG-START-->
+<div data-fase="0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="ernstig_ziek-t"><title id="ernstig_ziek-t">Bergen ligt ernstig ziek in bed, met een regenwolkje erboven</title><defs>
+<radialGradient id="ernstig_ziek-sk" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#d6d4c4"/><stop offset=".6" stop-color="#b3b09b"/><stop offset="1" stop-color="#8b8978"/></radialGradient>
+<radialGradient id="ernstig_ziek-so" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#f3dcc0"/><stop offset=".7" stop-color="#d9b48e"/><stop offset="1" stop-color="#b48a63"/></radialGradient>
+<radialGradient id="ernstig_ziek-gl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+<filter id="ernstig_ziek-cl" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#3a2014" flood-opacity=".35"/></filter>
+</defs><g filter="url(#ernstig_ziek-cl)"><ellipse cx="120" cy="214" rx="90" ry="16" fill="#8a6447"/><ellipse cx="120" cy="209" rx="90" ry="15" fill="url(#ernstig_ziek-so)"/><ellipse cx="120" cy="207" rx="80" ry="5" fill="#5b3a22" opacity=".28"/><rect x="38" y="140" width="10" height="66" rx="4" fill="#8a4f32"/><rect x="190" y="160" width="10" height="46" rx="4" fill="#8a4f32"/><rect x="40" y="150" width="160" height="34" rx="12" fill="#f3ead8"/><ellipse cx="72" cy="146" rx="26" ry="12" fill="#fbf5ea"/><ellipse cx="66" cy="142" rx="12" ry="4" fill="#fff" opacity=".7"/><circle cx="70" cy="128" r="21" fill="url(#ernstig_ziek-sk)"/><ellipse cx="62.019999999999996" cy="118.55" rx="5.9" ry="3.6" fill="#fff" opacity=".45" transform="rotate(-30 62.019999999999996 118.55)"/><path d="M59.5 125 q3.5 2.5 7 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><path d="M73.5 125 q3.5 2.5 7 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><path d="M64 137 q2 -2 3.5 0 t3.5 0 t3.5 0 t3.5 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><g transform="rotate(-28 90 138)"><rect x="82" y="136" width="26" height="5" rx="2.5" fill="#fff" stroke="#3a2620" stroke-width="1"/><rect x="90" y="137.5" width="17" height="2" rx="1" fill="#d63c2c"/><circle cx="107" cy="138.5" r="3.6" fill="#d63c2c"/></g><g transform="rotate(-12 43 142)"><path d="M24.0 142 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#b8452f" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="26.9" y="132" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M33.5 142 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#d99a3a" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="36.4" y="129" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M43.0 142 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="45.9" y="132" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M52.5 142 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#e8c547" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="55.4" y="129" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><rect x="22.0" y="140" width="42.0" height="5" rx="2.5" fill="#6b3d2a"/></g><path d="M90 140 q55 -14 108 6 v22 q-8 10 -20 10 h-80 q-10 0 -10 -12 z" fill="#c95a3f"/><path d="M110 136 v42 M140 134 v44 M170 138 v40 M92 156 h106" stroke="#e8c547" stroke-width="3" opacity=".75"/><path d="M90 140 q55 -14 108 6" fill="none" stroke="#f3a07f" stroke-width="3" opacity=".6"/><rect x="82" y="141" width="20" height="10" rx="5" fill="#c95a3f"/><circle cx="100" cy="146" r="5" fill="url(#ernstig_ziek-sk)"/><circle cx="100" cy="146" r="5" fill="url(#ernstig_ziek-gl)"/><circle cx="102.4" cy="50.4" r="12.100000000000001" fill="#a7a39b"/><circle cx="102.4" cy="50.4" r="12.100000000000001" fill="url(#ernstig_ziek-gl)"/><circle cx="120.0" cy="41.6" r="16.5" fill="#a7a39b"/><circle cx="120.0" cy="41.6" r="16.5" fill="url(#ernstig_ziek-gl)"/><circle cx="137.6" cy="49.3" r="13.200000000000001" fill="#a7a39b"/><circle cx="137.6" cy="49.3" r="13.200000000000001" fill="url(#ernstig_ziek-gl)"/><circle cx="124.4" cy="54.8" r="12.100000000000001" fill="#a7a39b"/><circle cx="124.4" cy="54.8" r="12.100000000000001" fill="url(#ernstig_ziek-gl)"/><path d="M102 64 q-4 6 0 8.5 q4 -2.5 0 -8.5z" fill="#6fa3c9"/><path d="M116 71 q-4 6 0 8.5 q4 -2.5 0 -8.5z" fill="#6fa3c9"/><path d="M130 64 q-4 6 0 8.5 q4 -2.5 0 -8.5z" fill="#6fa3c9"/><path d="M144 71 q-4 6 0 8.5 q4 -2.5 0 -8.5z" fill="#6fa3c9"/></g></svg></div>
+<div data-fase="1" hidden><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="hoestend-t"><title id="hoestend-t">Bergen staat voorovergebogen te hoesten, met sjaal om</title><defs>
+<radialGradient id="hoestend-sk" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#e6dac4"/><stop offset=".6" stop-color="#c9b89c"/><stop offset="1" stop-color="#9c8f79"/></radialGradient>
+<radialGradient id="hoestend-so" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#f3dcc0"/><stop offset=".7" stop-color="#d9b48e"/><stop offset="1" stop-color="#b48a63"/></radialGradient>
+<radialGradient id="hoestend-gl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+<filter id="hoestend-cl" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#3a2014" flood-opacity=".35"/></filter>
+</defs><g filter="url(#hoestend-cl)"><ellipse cx="120" cy="214" rx="70" ry="16" fill="#8a6447"/><ellipse cx="120" cy="209" rx="70" ry="15" fill="url(#hoestend-so)"/><ellipse cx="114" cy="207" rx="30" ry="5" fill="#5b3a22" opacity=".28"/><ellipse cx="92" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="90" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><ellipse cx="136" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="134" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M110 112 Q118 140 112 160" stroke="#8f4630" stroke-width="14" transform="translate(1.2 1.6)"/><path d="M110 112 Q118 140 112 160" stroke="#b9603f" stroke-width="12"/><path d="M110 112 Q118 140 112 160" stroke="#e7a07a" stroke-width="3.6" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M112 160 Q104 182 96 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M112 160 Q104 182 96 200" stroke="#b9603f" stroke-width="8"/><path d="M112 160 Q104 182 96 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M112 160 Q126 182 132 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M112 160 Q126 182 132 200" stroke="#b9603f" stroke-width="8"/><path d="M112 160 Q126 182 132 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><path d="M106 106 q20 -6 36 4 l-2 9 q-16 -8 -34 -3 z" fill="#c9443a"/><path d="M116 107 l-3 11 M126 107 l-3 12 M136 110 l-3 10" stroke="#f3ead8" stroke-width="3"/><path d="M110 112 l-8 26 l9 1 l5 -24 z" fill="#c9443a"/><path d="M104 130 l9 2" stroke="#f3ead8" stroke-width="3"/><circle cx="146" cy="92" r="23" fill="url(#hoestend-sk)"/><ellipse cx="137.26" cy="81.65" rx="6.4" ry="3.9" fill="#fff" opacity=".45" transform="rotate(-30 137.26 81.65)"/><path d="M137 87 l5 3 l-5 3 M159 87 l-5 3 l5 3" fill="none" stroke="#3a2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="151" cy="102" rx="3.2" ry="4" fill="#3a2620"/><g transform="rotate(14 144 72)"><path d="M125.0 72 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#b8452f" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="127.8" y="62" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M134.5 72 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#d99a3a" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="137.3" y="59" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M144.0 72 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="146.8" y="62" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M153.5 72 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#e8c547" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="156.3" y="59" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><rect x="123.0" y="70" width="42.0" height="5" rx="2.5" fill="#6b3d2a"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M114 118 Q138 116 140 104" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M114 118 Q138 116 140 104" stroke="#b9603f" stroke-width="8"/><path d="M114 118 Q138 116 140 104" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M114 120 Q100 142 108 160" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M114 120 Q100 142 108 160" stroke="#b9603f" stroke-width="8"/><path d="M114 120 Q100 142 108 160" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><circle cx="140" cy="103" r="5" fill="url(#hoestend-sk)"/><circle cx="140" cy="103" r="5" fill="url(#hoestend-gl)"/><circle cx="108" cy="160" r="5" fill="url(#hoestend-sk)"/><circle cx="108" cy="160" r="5" fill="url(#hoestend-gl)"/><ellipse cx="134" cy="98" rx="4" ry="2.6" fill="#b8c79a" opacity="0.6"/><ellipse cx="162" cy="98" rx="4" ry="2.6" fill="#b8c79a" opacity="0.6"/><circle cx="180" cy="96" r="6" fill="#e9e4da"/><circle cx="180" cy="96" r="6" fill="url(#hoestend-gl)"/><circle cx="187" cy="93" r="5" fill="#e9e4da"/><circle cx="187" cy="93" r="5" fill="url(#hoestend-gl)"/><circle cx="186" cy="101" r="4.5" fill="#e9e4da"/><circle cx="186" cy="101" r="4.5" fill="url(#hoestend-gl)"/><circle cx="198.0" cy="84.0" r="4.5" fill="#e9e4da"/><circle cx="198.0" cy="84.0" r="4.5" fill="url(#hoestend-gl)"/><circle cx="203.25" cy="81.75" r="3.75" fill="#e9e4da"/><circle cx="203.25" cy="81.75" r="3.75" fill="url(#hoestend-gl)"/><circle cx="202.5" cy="87.75" r="3.375" fill="#e9e4da"/><circle cx="202.5" cy="87.75" r="3.375" fill="url(#hoestend-gl)"/><circle cx="208.0" cy="104.0" r="3.5999999999999996" fill="#e9e4da"/><circle cx="208.0" cy="104.0" r="3.5999999999999996" fill="url(#hoestend-gl)"/><circle cx="212.2" cy="102.2" r="3.0" fill="#e9e4da"/><circle cx="212.2" cy="102.2" r="3.0" fill="url(#hoestend-gl)"/><circle cx="211.6" cy="107.0" r="2.6999999999999997" fill="#e9e4da"/><circle cx="211.6" cy="107.0" r="2.6999999999999997" fill="url(#hoestend-gl)"/><path d="M176 76 l6 -6 M186 112 l8 4" stroke="#3a2620" stroke-width="2" stroke-linecap="round"/></g></svg></div>
+<div data-fase="2" hidden><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="koortsig-t"><title id="koortsig-t">Bergen wiebelt koortsig, met rode wangen en een ijszak op het hoofd</title><defs>
+<radialGradient id="koortsig-sk" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#f5cfb3"/><stop offset=".6" stop-color="#e2a483"/><stop offset="1" stop-color="#b07f66"/></radialGradient>
+<radialGradient id="koortsig-so" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#f3dcc0"/><stop offset=".7" stop-color="#d9b48e"/><stop offset="1" stop-color="#b48a63"/></radialGradient>
+<radialGradient id="koortsig-gl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+<filter id="koortsig-cl" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#3a2014" flood-opacity=".35"/></filter>
+</defs><g filter="url(#koortsig-cl)"><ellipse cx="120" cy="214" rx="70" ry="16" fill="#8a6447"/><ellipse cx="120" cy="209" rx="70" ry="15" fill="url(#koortsig-so)"/><ellipse cx="120" cy="207" rx="26" ry="5" fill="#5b3a22" opacity=".28"/><ellipse cx="102" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="100" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><ellipse cx="132" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="130" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M118 158 q-14 10 -4 22 q2 10 -8 20" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M118 158 q-14 10 -4 22 q2 10 -8 20" stroke="#b9603f" stroke-width="8"/><path d="M118 158 q-14 10 -4 22 q2 10 -8 20" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M118 158 q14 10 4 22 q-2 10 8 20" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M118 158 q14 10 4 22 q-2 10 8 20" stroke="#b9603f" stroke-width="8"/><path d="M118 158 q14 10 4 22 q-2 10 8 20" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 100 Q124 130 118 158" stroke="#8f4630" stroke-width="14" transform="translate(1.2 1.6)"/><path d="M120 100 Q124 130 118 158" stroke="#b9603f" stroke-width="12"/><path d="M120 100 Q124 130 118 158" stroke="#e7a07a" stroke-width="3.6" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 112 Q96 124 90 142" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 112 Q96 124 90 142" stroke="#b9603f" stroke-width="8"/><path d="M120 112 Q96 124 90 142" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 112 Q146 122 152 140" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 112 Q146 122 152 140" stroke="#b9603f" stroke-width="8"/><path d="M120 112 Q146 122 152 140" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><circle cx="90" cy="143" r="5" fill="url(#koortsig-sk)"/><circle cx="90" cy="143" r="5" fill="url(#koortsig-gl)"/><circle cx="152" cy="141" r="5" fill="url(#koortsig-sk)"/><circle cx="152" cy="141" r="5" fill="url(#koortsig-gl)"/><circle cx="118" cy="76" r="23" fill="url(#koortsig-sk)"/><ellipse cx="109.26" cy="65.65" rx="6.4" ry="3.9" fill="#fff" opacity=".45" transform="rotate(-30 109.26 65.65)"/><circle cx="110" cy="78" r="3" fill="#3a2620"/><circle cx="109" cy="76.8" r=".9" fill="#fff"/><circle cx="126" cy="78" r="3" fill="#3a2620"/><circle cx="125" cy="76.8" r=".9" fill="#fff"/><path d="M111 89 q2 -2 3.5 0 t3.5 0 t3.5 0 t3.5 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="104" cy="85" rx="6" ry="3.9" fill="#e0402e" opacity="0.85"/><ellipse cx="132" cy="85" rx="6" ry="3.9" fill="#e0402e" opacity="0.85"/><path d="M96 56 q22 -22 46 -2 q4 8 -4 10 q-18 -8 -38 0 q-8 -2 -4 -8z" fill="#7fb6d9"/><path d="M104 50 q14 -10 30 -2" fill="none" stroke="#d6ecf7" stroke-width="3" stroke-linecap="round"/><rect x="114" y="32" width="12" height="9" rx="3" fill="#c9443a"/><path d="M146 66 q-6 9 0 13 q6 -4 0 -13z" fill="#8ec5e8" stroke="#4f86ad" stroke-width="1"/><path d="M144 72 q0 3 2 4" stroke="#fff" stroke-width="1.2" fill="none"/><path d="M68 110 q-5 6 0 12 q5 6 0 12 M172 110 q5 6 0 12 q-5 6 0 12" fill="none" stroke="#e0402e" stroke-width="2.4" stroke-linecap="round" opacity=".8"/><path d="M60 70 l10 -2 M64 54 l9 4 M176 54 l-9 4 M180 70 l-10 -2" stroke="#e8763a" stroke-width="2.4" stroke-linecap="round"/><g transform="translate(150 196)"><g transform="rotate(10 14 8)"><path d="M-5.0 8 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#b8452f" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="-2.1" y="-2" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M4.5 8 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#d99a3a" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="7.3" y="-5" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M14.0 8 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="16.9" y="-2" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M23.5 8 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#e8c547" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="26.4" y="-5" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><rect x="-7.0" y="6" width="42.0" height="5" rx="2.5" fill="#6b3d2a"/></g></g></g></svg></div>
+<div data-fase="3" hidden><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="herstellend-t"><title id="herstellend-t">Bergen herstelt met een dekentje om en een kopje thee</title><defs>
+<radialGradient id="herstellend-sk" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#f2d6be"/><stop offset=".6" stop-color="#ddb08e"/><stop offset="1" stop-color="#ac896e"/></radialGradient>
+<radialGradient id="herstellend-so" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#f3dcc0"/><stop offset=".7" stop-color="#d9b48e"/><stop offset="1" stop-color="#b48a63"/></radialGradient>
+<radialGradient id="herstellend-gl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+<filter id="herstellend-cl" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#3a2014" flood-opacity=".35"/></filter>
+</defs><g filter="url(#herstellend-cl)"><ellipse cx="120" cy="214" rx="70" ry="16" fill="#8a6447"/><ellipse cx="120" cy="209" rx="70" ry="15" fill="url(#herstellend-so)"/><ellipse cx="120" cy="207" rx="28" ry="5" fill="#5b3a22" opacity=".28"/><ellipse cx="104" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="102" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><ellipse cx="136" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="134" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 156 Q114 180 108 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 156 Q114 180 108 200" stroke="#b9603f" stroke-width="8"/><path d="M120 156 Q114 180 108 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 156 Q126 180 132 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 156 Q126 180 132 200" stroke="#b9603f" stroke-width="8"/><path d="M120 156 Q126 180 132 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><path d="M94 98 q26 -14 52 0 q10 30 6 66 q-32 10 -64 0 q-4 -36 6 -66z" fill="#d99a3a"/><path d="M100 104 l8 56 M120 98 v66 M140 104 l-8 56 M92 128 h56" stroke="#b8452f" stroke-width="3" opacity=".7"/><path d="M94 98 q26 -14 52 0" fill="none" stroke="#f5cf86" stroke-width="3"/><circle cx="132" cy="134" r="5" fill="url(#herstellend-sk)"/><circle cx="132" cy="134" r="5" fill="url(#herstellend-gl)"/><path d="M132 124 h22 l-3 16 q-8 5 -16 0z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.2"/><path d="M154 128 q8 0 6 7 q-2 4 -7 3" fill="none" stroke="#f3ead8" stroke-width="3"/><rect x="134" y="125" width="18" height="3" rx="1.5" fill="#a2552c"/><path d="M138 116 q-4 -6 0 -10 t0 -10 M147 116 q-4 -6 0 -10 t0 -10" fill="none" stroke="#e9e4da" stroke-width="2.4" stroke-linecap="round"/><circle cx="120" cy="72" r="23" fill="url(#herstellend-sk)"/><ellipse cx="111.26" cy="61.65" rx="6.4" ry="3.9" fill="#fff" opacity=".45" transform="rotate(-30 111.26 61.65)"/><circle cx="112" cy="72" r="3" fill="#3a2620"/><circle cx="111" cy="70.8" r=".9" fill="#fff"/><circle cx="128" cy="72" r="3" fill="#3a2620"/><circle cx="127" cy="70.8" r=".9" fill="#fff"/><path d="M115 82 q5 4 10 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="106" cy="79" rx="5" ry="3.2" fill="#e8765f" opacity="0.35"/><ellipse cx="134" cy="79" rx="5" ry="3.2" fill="#e8765f" opacity="0.35"/><g transform="rotate(-4 120 52)"><path d="M101.0 52 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#b8452f" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="103.8" y="42" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M110.5 52 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#d99a3a" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="113.3" y="39" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M120.0 52 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="122.8" y="42" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M129.5 52 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#e8c547" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="132.3" y="39" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><rect x="99.0" y="50" width="42.0" height="5" rx="2.5" fill="#6b3d2a"/></g></g></svg></div>
+<div data-fase="4" hidden><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="hoopvol-t"><title id="hoopvol-t">Bergen kijkt hoopvol omhoog naar een regenboog en de zon</title><defs>
+<radialGradient id="hoopvol-sk" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#f8d3b6"/><stop offset=".6" stop-color="#e8a57d"/><stop offset="1" stop-color="#b48061"/></radialGradient>
+<radialGradient id="hoopvol-so" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#f3dcc0"/><stop offset=".7" stop-color="#d9b48e"/><stop offset="1" stop-color="#b48a63"/></radialGradient>
+<radialGradient id="hoopvol-gl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+<filter id="hoopvol-cl" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#3a2014" flood-opacity=".35"/></filter>
+</defs><g filter="url(#hoopvol-cl)"><path d="M180 62 l-12 14 M190 64 l-4 16 M170 56 l-16 8" stroke="#f0b33f" stroke-width="3" stroke-linecap="round"/><g transform="translate(-18 -14)"><path d="M58 70 a38 38 0 0 1 64 -26" fill="none" stroke="#e05a4a" stroke-width="5" stroke-linecap="round"/><path d="M64 72 a32 32 0 0 1 54 -22" fill="none" stroke="#f0b33f" stroke-width="5" stroke-linecap="round"/><path d="M70 74 a26 26 0 0 1 44 -18" fill="none" stroke="#6fb07a" stroke-width="5" stroke-linecap="round"/><path d="M76 76 a20 20 0 0 1 34 -14" fill="none" stroke="#5f97cf" stroke-width="5" stroke-linecap="round"/></g><circle cx="162.8" cy="41.8" r="10.45" fill="#bdb9b0"/><circle cx="162.8" cy="41.8" r="10.45" fill="url(#hoopvol-gl)"/><circle cx="178.0" cy="34.2" r="14.25" fill="#bdb9b0"/><circle cx="178.0" cy="34.2" r="14.25" fill="url(#hoopvol-gl)"/><circle cx="193.2" cy="40.85" r="11.399999999999999" fill="#bdb9b0"/><circle cx="193.2" cy="40.85" r="11.399999999999999" fill="url(#hoopvol-gl)"/><circle cx="181.8" cy="45.6" r="10.45" fill="#bdb9b0"/><circle cx="181.8" cy="45.6" r="10.45" fill="url(#hoopvol-gl)"/><circle cx="196" cy="30" r="10" fill="#f4c542"/><circle cx="196" cy="30" r="10" fill="url(#hoopvol-gl)"/><ellipse cx="120" cy="214" rx="70" ry="16" fill="#8a6447"/><ellipse cx="120" cy="209" rx="70" ry="15" fill="url(#hoopvol-so)"/><ellipse cx="120" cy="207" rx="28" ry="5" fill="#5b3a22" opacity=".28"/><ellipse cx="104" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="102" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><ellipse cx="138" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="136" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 158 Q112 182 108 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 158 Q112 182 108 200" stroke="#b9603f" stroke-width="8"/><path d="M120 158 Q112 182 108 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 158 Q128 182 134 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 158 Q128 182 134 200" stroke="#b9603f" stroke-width="8"/><path d="M120 158 Q128 182 134 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M118 104 Q120 132 120 158" stroke="#8f4630" stroke-width="14" transform="translate(1.2 1.6)"/><path d="M118 104 Q120 132 120 158" stroke="#b9603f" stroke-width="12"/><path d="M118 104 Q120 132 120 158" stroke="#e7a07a" stroke-width="3.6" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M119 116 Q140 102 152 84" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M119 116 Q140 102 152 84" stroke="#b9603f" stroke-width="8"/><path d="M119 116 Q140 102 152 84" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M119 118 Q100 136 98 154" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M119 118 Q100 136 98 154" stroke="#b9603f" stroke-width="8"/><path d="M119 118 Q100 136 98 154" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><circle cx="152" cy="84" r="5" fill="url(#hoopvol-sk)"/><circle cx="152" cy="84" r="5" fill="url(#hoopvol-gl)"/><circle cx="98" cy="155" r="5" fill="url(#hoopvol-sk)"/><circle cx="98" cy="155" r="5" fill="url(#hoopvol-gl)"/><g transform="rotate(-14 116 80)"><circle cx="116" cy="80" r="23" fill="url(#hoopvol-sk)"/><ellipse cx="107.26" cy="69.65" rx="6.4" ry="3.9" fill="#fff" opacity=".45" transform="rotate(-30 107.26 69.65)"/><circle cx="111" cy="77" r="3.4" fill="#fff"/><circle cx="111.6" cy="75.6" r="2.2" fill="#3a2620"/><circle cx="127" cy="77" r="3.4" fill="#fff"/><circle cx="127.6" cy="75.6" r="2.2" fill="#3a2620"/><path d="M112 88 q7 7 14 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="105" cy="85" rx="5" ry="3.2" fill="#e8765f" opacity="0.35"/><ellipse cx="133" cy="85" rx="5" ry="3.2" fill="#e8765f" opacity="0.35"/><g transform="rotate(0 116 60)"><path d="M97.0 60 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#b8452f" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="99.8" y="50" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M106.5 60 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#d99a3a" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="109.3" y="47" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M116.0 60 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="118.8" y="50" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M125.5 60 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#e8c547" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="128.3" y="47" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><rect x="95.0" y="58" width="42.0" height="5" rx="2.5" fill="#6b3d2a"/></g></g></g></svg></div>
+<div data-fase="5" hidden><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="opgelucht-t"><title id="opgelucht-t">Bergen ademt opgelucht uit, het dekentje ligt op de grond</title><defs>
+<radialGradient id="opgelucht-sk" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#f8d3b6"/><stop offset=".6" stop-color="#e8a57d"/><stop offset="1" stop-color="#b48061"/></radialGradient>
+<radialGradient id="opgelucht-so" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#f3dcc0"/><stop offset=".7" stop-color="#d9b48e"/><stop offset="1" stop-color="#b48a63"/></radialGradient>
+<radialGradient id="opgelucht-gl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+<filter id="opgelucht-cl" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#3a2014" flood-opacity=".35"/></filter>
+</defs><g filter="url(#opgelucht-cl)"><ellipse cx="120" cy="214" rx="78" ry="16" fill="#8a6447"/><ellipse cx="120" cy="209" rx="78" ry="15" fill="url(#opgelucht-so)"/><ellipse cx="120" cy="207" rx="28" ry="5" fill="#5b3a22" opacity=".28"/><path d="M140 206 q16 -16 40 -8 q8 6 -2 12 q-20 4 -38 -4z" fill="#d99a3a"/><path d="M150 202 l12 6 M166 198 l6 10" stroke="#b8452f" stroke-width="2.5" opacity=".7"/><ellipse cx="102" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="100" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><ellipse cx="138" cy="202" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="136" cy="200" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 158 Q112 182 106 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 158 Q112 182 106 200" stroke="#b9603f" stroke-width="8"/><path d="M120 158 Q112 182 106 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 158 Q128 182 134 200" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 158 Q128 182 134 200" stroke="#b9603f" stroke-width="8"/><path d="M120 158 Q128 182 134 200" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 100 Q122 130 120 158" stroke="#8f4630" stroke-width="14" transform="translate(1.2 1.6)"/><path d="M120 100 Q122 130 120 158" stroke="#b9603f" stroke-width="12"/><path d="M120 100 Q122 130 120 158" stroke="#e7a07a" stroke-width="3.6" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 114 Q100 130 90 150" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 114 Q100 130 90 150" stroke="#b9603f" stroke-width="8"/><path d="M120 114 Q100 130 90 150" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 114 Q140 130 150 150" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 114 Q140 130 150 150" stroke="#b9603f" stroke-width="8"/><path d="M120 114 Q140 130 150 150" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><circle cx="90" cy="151" r="5" fill="url(#opgelucht-sk)"/><circle cx="90" cy="151" r="5" fill="url(#opgelucht-gl)"/><circle cx="150" cy="151" r="5" fill="url(#opgelucht-sk)"/><circle cx="150" cy="151" r="5" fill="url(#opgelucht-gl)"/><circle cx="120" cy="76" r="23" fill="url(#opgelucht-sk)"/><ellipse cx="111.26" cy="65.65" rx="6.4" ry="3.9" fill="#fff" opacity=".45" transform="rotate(-30 111.26 65.65)"/><path d="M108.5 75 q3.5 -4.5 7 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><path d="M124.5 75 q3.5 -4.5 7 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="121" cy="87" rx="4" ry="3" fill="#3a2620"/><ellipse cx="106" cy="82" rx="5" ry="3.2" fill="#e8765f" opacity="0.5"/><ellipse cx="134" cy="82" rx="5" ry="3.2" fill="#e8765f" opacity="0.5"/><g transform="rotate(6 120 56)"><path d="M101.0 56 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#b8452f" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="103.8" y="46" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M110.5 56 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#d99a3a" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="113.3" y="43" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M120.0 56 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="122.8" y="46" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M129.5 56 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#e8c547" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="132.3" y="43" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><rect x="99.0" y="54" width="42.0" height="5" rx="2.5" fill="#6b3d2a"/></g><path d="M128 90 q14 -2 22 -12" fill="none" stroke="#e9e4da" stroke-width="2.6" stroke-linecap="round"/><circle cx="162.0" cy="70.0" r="6.8999999999999995" fill="#e9e4da"/><circle cx="162.0" cy="70.0" r="6.8999999999999995" fill="url(#opgelucht-gl)"/><circle cx="170.05" cy="66.55" r="5.75" fill="#e9e4da"/><circle cx="170.05" cy="66.55" r="5.75" fill="url(#opgelucht-gl)"/><circle cx="168.9" cy="75.75" r="5.175" fill="#e9e4da"/><circle cx="168.9" cy="75.75" r="5.175" fill="url(#opgelucht-gl)"/><circle cx="182.0" cy="54.0" r="4.199999999999999" fill="#e9e4da"/><circle cx="182.0" cy="54.0" r="4.199999999999999" fill="url(#opgelucht-gl)"/><circle cx="186.9" cy="51.9" r="3.5" fill="#e9e4da"/><circle cx="186.9" cy="51.9" r="3.5" fill="url(#opgelucht-gl)"/><circle cx="186.2" cy="57.5" r="3.15" fill="#e9e4da"/><circle cx="186.2" cy="57.5" r="3.15" fill="url(#opgelucht-gl)"/></g></svg></div>
+<div data-fase="6" hidden><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="gezond-t"><title id="gezond-t">Bergen springt kerngezond met de paraplu dicht in de hand</title><defs>
+<radialGradient id="gezond-sk" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#fbd5b5"/><stop offset=".6" stop-color="#eaa074"/><stop offset="1" stop-color="#b67c5a"/></radialGradient>
+<radialGradient id="gezond-so" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#f3dcc0"/><stop offset=".7" stop-color="#d9b48e"/><stop offset="1" stop-color="#b48a63"/></radialGradient>
+<radialGradient id="gezond-gl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+<filter id="gezond-cl" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#3a2014" flood-opacity=".35"/></filter>
+</defs><g filter="url(#gezond-cl)"><path d="M54.0 44.0 l9.0 0.0" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><path d="M49.3 55.3 l6.4 6.4" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><path d="M38.0 60.0 l0.0 9.0" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><path d="M26.7 55.3 l-6.4 6.4" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><path d="M22.0 44.0 l-9.0 0.0" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><path d="M26.7 32.7 l-6.4 -6.4" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><path d="M38.0 28.0 l-0.0 -9.0" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><path d="M49.3 32.7 l6.3 -6.4" stroke="#f0a92b" stroke-width="3.5" stroke-linecap="round"/><circle cx="38" cy="44" r="13" fill="#f6c443"/><circle cx="38" cy="44" r="13" fill="url(#gezond-gl)"/><path d="M33 46 q5 5 10 0" fill="none" stroke="#3a2620" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="120" cy="214" rx="70" ry="16" fill="#8a6447"/><ellipse cx="120" cy="209" rx="70" ry="15" fill="url(#gezond-so)"/><ellipse cx="120" cy="207" rx="22" ry="5" fill="#5b3a22" opacity=".28"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 142 Q104 156 96 172" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 142 Q104 156 96 172" stroke="#b9603f" stroke-width="8"/><path d="M120 142 Q104 156 96 172" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 142 Q138 158 146 174" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 142 Q138 158 146 174" stroke="#b9603f" stroke-width="8"/><path d="M120 142 Q138 158 146 174" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><ellipse cx="92" cy="174" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="90" cy="172" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><ellipse cx="150" cy="176" rx="9" ry="5.5" fill="#5b3326"/><ellipse cx="148" cy="174" rx="4" ry="1.6" fill="#a0624a" opacity=".7"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 88 Q122 116 120 142" stroke="#8f4630" stroke-width="14" transform="translate(1.2 1.6)"/><path d="M120 88 Q122 116 120 142" stroke="#b9603f" stroke-width="12"/><path d="M120 88 Q122 116 120 142" stroke="#e7a07a" stroke-width="3.6" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 100 Q100 84 88 58" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 100 Q100 84 88 58" stroke="#b9603f" stroke-width="8"/><path d="M120 100 Q100 84 88 58" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M120 100 Q142 84 156 60" stroke="#8f4630" stroke-width="10" transform="translate(1.2 1.6)"/><path d="M120 100 Q142 84 156 60" stroke="#b9603f" stroke-width="8"/><path d="M120 100 Q142 84 156 60" stroke="#e7a07a" stroke-width="2.4" opacity=".7" transform="translate(-1.4 -1.4)"/></g><g transform="rotate(20 160 58)"><path d="M160 58 v96" stroke="#5b3326" stroke-width="3.5" stroke-linecap="round"/><path d="M160 74 q-9 30 0 70 q9 -40 0 -70z" fill="#2f6f8f"/><path d="M160 76 q-3 30 0 66" stroke="#7fb6d9" stroke-width="1.6" fill="none"/><path d="M160 58 q0 -10 8 -8" fill="none" stroke="#5b3326" stroke-width="3.5" stroke-linecap="round"/></g><circle cx="88" cy="58" r="5" fill="url(#gezond-sk)"/><circle cx="88" cy="58" r="5" fill="url(#gezond-gl)"/><circle cx="156" cy="60" r="5" fill="url(#gezond-sk)"/><circle cx="156" cy="60" r="5" fill="url(#gezond-gl)"/><circle cx="120" cy="64" r="23" fill="url(#gezond-sk)"/><ellipse cx="111.26" cy="53.65" rx="6.4" ry="3.9" fill="#fff" opacity=".45" transform="rotate(-30 111.26 53.65)"/><path d="M108.5 62 q3.5 -4.5 7 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><path d="M124.5 62 q3.5 -4.5 7 0" fill="none" stroke="#3a2620" stroke-width="2.2" stroke-linecap="round"/><path d="M110 70 q10 14 20 0 z" fill="#3a2620"/><path d="M115 77 q5 3 10 0 q-5 -3 -10 0" fill="#d9665a"/><ellipse cx="106" cy="69" rx="5" ry="3.2" fill="#e8765f" opacity="0.6"/><ellipse cx="134" cy="69" rx="5" ry="3.2" fill="#e8765f" opacity="0.6"/><g transform="rotate(-8 120 44)"><path d="M101.0 44 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#b8452f" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="103.8" y="34" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M110.5 44 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#d99a3a" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="113.3" y="31" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M120.0 44 v-13 l4.75 -5.9 l4.75 5.9 v13 z" fill="#f3ead8" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="122.8" y="34" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><path d="M129.5 44 v-16 l4.75 -5.9 l4.75 5.9 v16 z" fill="#e8c547" stroke="#3a2620" stroke-width="1.3" stroke-linejoin="round"/><rect x="132.3" y="31" width="3.8" height="4" rx="1" fill="#3a2620" opacity=".55"/><rect x="99.0" y="42" width="42.0" height="5" rx="2.5" fill="#6b3d2a"/></g><path d="M64 96 l-8 -4 M66 110 l-9 1 M176 96 l8 -4 M174 110 l9 1" stroke="#f0a92b" stroke-width="2.6" stroke-linecap="round"/></g></svg></div>
+<!--FIG-END-->
+      </div>
+      <div class="total">
+        <div class="lbl">Totale gezondheid</div>
+        <div class="big"><span id="totPct">0</span><small>%</small></div>
+        <div class="fase" id="fase">Ernstig ziek</div>
+      </div>
+    </div>
+    <div class="meters" id="meters"></div>
+    <p class="statusnote">Elk orgaansysteem staat op 100% als al zijn behandelingen zijn uitgevoerd. Totale gezondheid is het gemiddelde van de vijf.</p>
+  </aside>
+
+  <section class="vel" id="behandelplan" style="--tab:var(--s-geh)">
+    <div class="tab">Behandelplan</div>
+    <h2>Behandelplan</h2>
+    <p class="lead">Interventies naar keuze van de behandelend arts, geordend per orgaansysteem. Kosten per persoon, in kronen. Spreiden over de systemen is klinisch het verstandigst: een systeem dat al op 100% staat, wordt er niet beter van.</p>
+    <div id="plan"></div>
+  </section>
+
+  <section class="vel" id="decursus" style="--tab:var(--pen)">
+    <div class="tab">Decursus</div>
+    <h2>Voortgangsnotities</h2>
+    <p class="lead">Uitgevoerde behandelingen in volgorde, met de notities en foto's die bij de behandeling zijn vastgelegd.</p>
+    <div class="decursus" id="decList"></div>
+  </section>
+
+  <section class="vel" id="recepten" style="--tab:var(--seal)">
+    <div class="tab">Recepten</div>
+    <h2>Geheime recepten</h2>
+    <p class="lead">Twee recepten liggen klaar in het dossier. Ze worden op het juiste moment voorgeschreven.</p>
+    <div class="recepten">
+      <article class="rx" id="rxSauna"></article>
+      <article class="rx" id="rxLys"></article>
+    </div>
+  </section>
+
+  <section class="vel" id="ontslag" style="--tab:var(--ink-3)">
+    <div class="tab">Ontslag</div>
+    <div id="ontslagInhoud"></div>
+  </section>
+</main>
+
+<footer>
+  <p id="opslagNoot">Voortgang wordt op dit toestel bewaard.</p>
+  <p>Anerosis bergensis is een fictieve aandoening. Dit dossier bevat geen medische informatie, alleen een behandelplan voor een stad.</p>
+</footer>
+
+<script>
+/* ===== Constanten (Niels vult in) ===== */
+const OPEN_SAUNA = "2026-10-22T12:00";      // Europe/Oslo
+const OPEN_LYSVERKET = "2026-10-23T12:00";  // Europe/Oslo
+const LYSVERKET_TIJD = "";                  // bv. "19:30"; leeg = "tijd volgt"
+const ONTSLAG_UITERLIJK = "2026-10-24T08:00";
+const CONTROLE_DATUM = "";                  // leeg = "datum nader te bepalen"
+const CHOCO_HUT_NAAM = "";                  // naam van het hutje met warme chocolademelk
+const OPNAME = "2026-10-20T16:50";
+const LAATSTE_DAG = "2026-10-24";
+
+/* ===== Tijd in Europe/Oslo ===== */
+const TZ = "Europe/Oslo";
+const fmtParts = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+function osloParts(d) { const o = {}; fmtParts.formatToParts(d).forEach(p => o[p.type] = p.value); return o; }
+function osloToDate(s) {
+  const [Y, M, D, h = 0, m = 0] = s.match(/\d+/g).map(Number);
+  const want = Date.UTC(Y, M - 1, D, h, m);
+  let t = want;
+  for (let i = 0; i < 2; i++) { const p = osloParts(new Date(t)); t += want - Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute); }
+  return new Date(t);
+}
+const fmtDag = new Intl.DateTimeFormat("nl-NL", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
+const fmtKort = new Intl.DateTimeFormat("nl-NL", { timeZone: TZ, weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const fmtDatum = new Intl.DateTimeFormat("nl-NL", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" });
+function osloYmd(d) { const p = osloParts(d); return p.year + "-" + p.month + "-" + p.day; }
+
+/* ===== Testmodus: #demo.20261023-1300.regen of ?demo=2026-10-23T13:00&weer=regen ===== */
+const DEMO = (() => {
+  let tijd = "", weer = "", aan = false;
+  const h = (location.hash || "").slice(1);
+  if (/^demo(\.|$)/.test(h)) {
+    aan = true;
+    h.split(".").slice(1).forEach(tok => {
+      const m = tok.match(/^(\d{4})(\d{2})(\d{2})(?:-(\d{2})(\d{2}))?$/);
+      if (m) tijd = `${m[1]}-${m[2]}-${m[3]}T${m[4] || "09"}:${m[5] || "00"}`;
+      else if (tok === "regen" || tok === "droog") weer = tok;
+    });
+  }
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.has("demo")) { aan = true; const v = q.get("demo"); if (/^\d{4}-\d{2}-\d{2}/.test(v)) tijd = v.length === 10 ? v + "T09:00" : v.slice(0, 16); }
+    if (q.has("weer") && /^(regen|droog)$/.test(q.get("weer"))) { aan = true; weer = q.get("weer"); }
+  } catch (e) {}
+  return aan ? { tijd, weer } : null;
+})();
+function now() { return DEMO && DEMO.tijd ? osloToDate(DEMO.tijd) : new Date(); }
+addEventListener("hashchange", e => { if (/#demo/.test(e.oldURL + e.newURL)) location.reload(); });
+
+/* ===== Behandelingen ===== */
+const SYSTEMEN = [
+  { id: "hart", naam: "Hart", kleur: "var(--s-hart)", bev: "Bevinding: weinig warmte in het dagritme.", items: ["bryggen", "klee", "vagal", "lysverket"] },
+  { id: "longen", naam: "Longen", kleur: "var(--s-long)", bev: "Bevinding: te weinig frisse lucht op hoogte.", items: ["floyen", "sandviksbatteriet", "daytrip"] },
+  { id: "maag", naam: "Maag-darmstelsel", kleur: "var(--s-maag)", bev: "Bevinding: onvoldoende lokale intake.", items: ["hotdog", "vismarkt", "tasting"] },
+  { id: "zenuw", naam: "Zenuwstelsel", kleur: "var(--s-zenuw)", bev: "Bevinding: verhoogde spanning; ontspanning volgt op recept.", items: ["rx-sauna"] },
+  { id: "geheugen", naam: "Geheugen en stemming", kleur: "var(--s-geh)", bev: "Bevinding: sinds augustus weinig nieuwe herinneringen aangelegd.", items: ["chocomelk", "picknick"] },
+];
+const ITEMS = {
+  bryggen: { title: "Bryggen", cost: "gratis", rain: true, desc: "De houten Hanzekade, UNESCO-werelderfgoed. Rondwandelen is gratis en werkt ook onder een paraplu. Toediening: wandelend, in eigen tempo.", address: "Bryggen, 5003 Bergen", website: "https://en.visitbergen.com/things-to-do/bryggen-in-bergen-p878553" },
+  klee: { title: "Café Klee", cost: "kr 100 à 150", rain: true, desc: "Favoriet van de assistent: veel planten, goede koffie en matcha, gebak. Herhaling toegestaan. Open ma t/m za 09:00 tot 17:00, zo 11:00 tot 17:00.", address: "Herman Foss gate 12, 5007 Bergen", website: "https://kleekaffe.no/en/" },
+  vagal: { title: "Vågal", cost: "kr 100 à 150", rain: true, desc: "Knus, veel loungebanken; overdag café, 's avonds wijnbar. Matcha volgens de assistent een 7 uit 10. Open vanaf 12:00, op vrijdag en zaterdag tot laat.", address: "Kong Oscars gate 10, 5017 Bergen", website: "https://www.facebook.com/vagalbergen/" },
+  floyen: { title: "Fløyen, te voet", cost: "gratis", rain: false, desc: "Naar boven lopen in plaats van de kabelbaan. Uitzicht over de hele patiënt.", address: "Fløibanen, Vetrlidsallmenningen 23A, 5014 Bergen", website: "https://www.floyen.no/en/" },
+  sandviksbatteriet: { title: "Sandviksbatteriet", cost: "gratis", rain: false, desc: "Oud fort boven Sandviken, met uitzicht over stad, fjord en Askøy. Ongeveer 1,8 km en 166 hoogtemeters per richting; laatste stuk steil. Reken op circa 2 uur heen en terug.", address: "Sandviksbatteriet, Fjellveien, Bergen", website: "https://ut.no/turforslag/1112154797/tur-til-sandviksbatteriet-friluftsomrade-bergen" },
+  daytrip: { title: "Dagtrip met hike", cost: "kr 0 à 300 (vervoer)", rain: false, desc: "Kies de dag met het beste weerbericht; pas kort van tevoren vastleggen.", address: null, website: null },
+  hotdog: { title: "Hotdog bij Trekroneren", cost: "kr ~99 (onbevestigd)", rain: true, desc: "De klassieke toeristenversie, sinds 1946, ook met rendierworst in lompe. Een bekende toeristenval, hier bewust en eenmalig voorgeschreven.", address: "Trekroneren, Kong Oscars gate 1, 5017 Bergen", website: null },
+  vismarkt: { title: "Visbrood op de vismarkt", cost: "kr ~140", rain: true, desc: "Fisketorget, overdekte hal (Mathallen), het hele jaar open. Het klassieke visbrød (broodje vis) is hier de standaardbehandeling. Prijs is een schatting.", address: "Torget, 5014 Bergen", website: "https://en.visitbergen.com/things-to-do/shopping/fish-market" },
+  tasting: { title: "Brunost met rendier", cost: "kr 215 à 585", rain: true, desc: "Bryggen Tracteursted: rendierfilet gevuld met bruine geitenkaas (kr 585), of rendiertartaar als kleinere dosis (kr 215). Open wo t/m zo 17:00 tot 23:00, laatste tafel 21:00.", address: "Bryggen Tracteursted, Bryggestredet 2, 5003 Bergen", website: "https://bryggentracteursted.no/" },
+  chocomelk: { title: "Warme chocolademelk bij het hutje", cost: "nog te bevestigen", rain: false, desc: "Klein hutje boven aan een wandeling, tegenover een riviertje, richting Fantoft. Niet Fjåk.", address: null, website: null },
+  picknick: { title: "Wandeling met picknick", cost: "eigen eten", rain: false, desc: "Wandeling met een picknick onderweg, op een droge dag. Eerder effectief gebleken bij de referentiepatiënt (25-04).", address: null, website: null },
+  "rx-sauna": { title: "Recept 1: warmte en koude", cost: "", rain: true, desc: "", recept: true },
+  lysverket: { title: "Recept 2: diner bij Lysverket", cost: "", rain: true, desc: "", recept: true, address: "Rasmus Meyers allé 9, 5015 Bergen" },
+};
+if (CHOCO_HUT_NAAM) ITEMS.chocomelk.title = "Warme chocolademelk bij " + CHOCO_HUT_NAAM;
+else ITEMS.chocomelk.desc += " Naam van het hutje: nog niet teruggevonden.";
+const SYS_VAN = {}; SYSTEMEN.forEach(s => s.items.forEach(i => SYS_VAN[i] = s));
+const FASES = ["Ernstig ziek", "Hoestend", "Koortsig", "Herstellend", "Hoopvol", "Opgelucht", "Gezond"];
+const GRENZEN = [15, 30, 45, 60, 75, 90];
+
+/* ===== Opslag ===== */
+const PREFIX = DEMO ? "bergen-dossier-demo" : "bergen-dossier";
+const KEY = PREFIX + "-v1", FOTO_KEY = PREFIX + "-fotos";
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+let S = lsGet(KEY) || { items: {}, weer: "" };
+if (!S.items) S.items = {};
+let FOTOS = lsGet(FOTO_KEY) || {};
+// Eenmalige overname uit de vorige versie van de site (zelfde opslag).
+if (!DEMO && !lsGet(KEY)) {
+  const oldC = lsGet("bergen-tess-checked") || {}, oldP = lsGet("bergen-tess-photos") || {}, oldB = lsGet("bergen-tess-booked") || {};
+  const map = { "t-bryggen": "bryggen", "t-floyen": "floyen", "t-sandvik": "sandviksbatteriet", "d-hike-picknick": "picknick", "d-chocomelk": "chocomelk", "sauna-heit": "rx-sauna", "sauna-city": "rx-sauna" };
+  Object.keys(oldC).forEach(k => { const id = map[k] || k; if (oldC[k] && ITEMS[id]) it(id).done = true; });
+  Object.keys(oldB).forEach(k => { const id = map[k] || k; if (oldB[k] && ITEMS[id]) it(id).booked = true; });
+  Object.keys(oldP).forEach(k => { const id = map[k] || k; if (ITEMS[id] && !FOTOS[id]) FOTOS[id] = oldP[k]; });
+  if (Object.keys(S.items).length) { lsSet(KEY, S); lsSet(FOTO_KEY, FOTOS); }
+}
+function it(id) { return S.items[id] || (S.items[id] = { done: false, note: "", booked: false, keuze: "", t: 0 }); }
+function saveLocal() { lsSet(KEY, S); }
+
+/* Gedeelde opslag via db (één document per behandeling in "voortgang") */
+let db = null, col = null, dbMode = "lokaal", unsub = null;
+const busy = {}, pending = {};
+function docBody(id) { if (id === "algemeen") return { weer: S.weer || "" }; const x = it(id); return { done: !!x.done, note: x.note || "", booked: !!x.booked, keuze: x.keuze || "", t: x.t || 0 }; }
+function push(id) { if (!col) return; pending[id] = true; if (!busy[id]) flush(id); }
+async function flush(id) {
+  busy[id] = true;
+  let retried = false;
+  while (pending[id] && col) {
+    pending[id] = false;
+    try { await col.doc(id).set(docBody(id)); retried = false; }
+    catch (e) {
+      const code = e && e.code;
+      if (code === "unavailable" && !retried) { retried = true; pending[id] = true; await new Promise(r => setTimeout(r, 600 + Math.random() * 900)); }
+      else if (code === "quota_exceeded") { setNoot("Gedeelde opslag is vol; wijzigingen blijven op dit toestel."); }
+      else { naarLokaal(); }
+    }
+  }
+  busy[id] = false;
+}
+function naarLokaal(reden) {
+  if (unsub) { try { unsub(); } catch (e) {} unsub = null; }
+  col = null; dbMode = "lokaal"; noot(reden);
+}
+function setNoot(t) { document.getElementById("opslagNoot").textContent = t; }
+function noot(reden) {
+  const foto = " Foto's blijven altijd op het toestel waarop ze zijn toegevoegd.";
+  if (DEMO) return setNoot("Testmodus: wijzigingen blijven op dit toestel en staan los van het echte dossier.");
+  if (dbMode === "gedeeld") return setNoot("Voortgang wordt gedeeld: vinkjes, notities en keuzes lopen gelijk op elke telefoon die dit dossier opent." + foto);
+  setNoot((reden || "Voortgang wordt op dit toestel bewaard; er is geen synchronisatie met andere telefoons.") + foto);
+}
+async function startDb() {
+  noot();
+  if (DEMO || !window.claude || typeof window.claude.use !== "function") return;
+  let d = null;
+  try { d = await window.claude.use("db"); } catch (e) { d = null; }
+  if (!d) return;
+  try {
+    const user = await window.claude.use("user").catch(() => null);
+    if (user && typeof user.can === "function") {
+      const w = await user.can("data.write").catch(() => null);
+      if (w === false) return noot("U kunt dit dossier bekijken, maar niet in de gedeelde opslag schrijven; voortgang wordt daarom op dit toestel bewaard.");
+    }
+  } catch (e) {}
+  db = d; col = db.collection("voortgang"); dbMode = "gedeeld"; noot();
+  let eerste = true;
+  unsub = col.onSnapshot(snap => {
+    const gezien = new Set();
+    snap.docs.forEach(doc => {
+      gezien.add(doc.id);
+      if (busy[doc.id] || pending[doc.id] || noteTimers[doc.id]) return; // eigen schrijfactie loopt nog
+      const v = doc.data() || {};
+      if (doc.id === "algemeen") { S.weer = v.weer === "regen" || v.weer === "droog" ? v.weer : ""; return; }
+      if (!ITEMS[doc.id]) return;
+      S.items[doc.id] = { done: !!v.done, note: typeof v.note === "string" ? v.note : "", booked: !!v.booked, keuze: typeof v.keuze === "string" ? v.keuze : "", t: +v.t || 0 };
+    });
+    if (eerste) {
+      eerste = false;
+      // Lokaal al aanwezige voortgang die nog niet gedeeld is: eenmalig uploaden.
+      Object.keys(S.items).forEach(id => { const x = S.items[id]; if (!gezien.has(id) && (x.done || x.note || x.booked || x.keuze)) push(id); });
+      if (S.weer && !gezien.has("algemeen")) push("algemeen");
+    }
+    saveLocal(); update();
+  }, err => { naarLokaal("De verbinding met de gedeelde opslag is verbroken; voortgang wordt nu op dit toestel bewaard."); });
+}
+
+/* ===== Weer ===== */
+let autoWeer = null; // { weer, temp, kans, mm }
+async function haalWeer() {
+  if (DEMO && DEMO.weer) { autoWeer = { weer: DEMO.weer, demo: true }; return update(); }
+  // In het artifact blokkeert de beveiliging externe verzoeken; daar alleen handmatig.
+  if (window.claude) return;
+  try {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 7000);
+    const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=60.39&longitude=5.32&current=temperature_2m,precipitation&daily=precipitation_sum,precipitation_probability_max&timezone=Europe%2FOslo&forecast_days=1", { signal: ctl.signal });
+    clearTimeout(to);
+    if (!r.ok) return;
+    const j = await r.json();
+    const kans = j.daily && j.daily.precipitation_probability_max ? j.daily.precipitation_probability_max[0] : null;
+    const mm = j.daily && j.daily.precipitation_sum ? j.daily.precipitation_sum[0] : null;
+    const nu = j.current ? j.current.precipitation : 0;
+    const regen = (nu > 0.2) || (kans != null && kans >= 70) || (mm != null && mm >= 3);
+    autoWeer = { weer: regen ? "regen" : "droog", temp: j.current ? j.current.temperature_2m : null, kans, mm };
+    update();
+  } catch (e) { /* geen weerbron: handmatige schakelaar blijft werken */ }
+}
+function weerNu() { return S.weer || (autoWeer ? autoWeer.weer : "droog"); }
+
+/* ===== Opbouw ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const mapsUrl = a => "https://maps.apple.com/?q=" + encodeURIComponent(a);
+let downloads = null;
+
+function bouwMeters() {
+  document.getElementById("meters").innerHTML = SYSTEMEN.map(s => `
+    <div class="meter" style="--c:${s.kleur}">
+      <div class="row"><span>${s.naam}</span><span id="m-${s.id}">0%</span></div>
+      <div class="bar" role="progressbar" aria-label="${s.naam}" aria-valuemin="0" aria-valuemax="100" id="b-${s.id}"><i></i></div>
+    </div>`).join("");
+}
+function extraHtml(id) {
+  return `<details class="extra" id="ex-${id}"><summary><span data-ag="0">Notitie en foto</span><span data-ag="1" hidden>Notitie, foto en agenda</span></summary><div class="exin">
+      <label class="notelbl" for="note-${id}">Voortgangsnotitie</label>
+      <textarea class="note" id="note-${id}" data-note="${id}" rows="2" placeholder="Kort verslag, bijwerkingen, indruk"></textarea>
+      <div class="row2">
+        <span class="btn fotobtn">Foto toevoegen<input type="file" accept="image/*" id="foto-${id}" data-foto="${id}" aria-label="Foto toevoegen"></span>
+        <img class="thumb" id="thumb-${id}" alt="Foto bij de behandeling" hidden>
+        <button class="btn" data-fotoweg="${id}" id="fotoweg-${id}" hidden>Foto verwijderen</button>
+        <span class="msg" id="msg-${id}"></span>
+      </div>
+      <div class="row2 agenda" data-agenda hidden>
+        <input type="date" id="date-${id}" min="2026-10-20" max="${LAATSTE_DAG}" aria-label="Datum">
+        <input type="time" id="time-${id}" value="12:00" aria-label="Tijd">
+        <button class="btn" data-ics="${id}">Aan agenda toevoegen</button>
+      </div>
+    </div></details>`;
+}
+function bouwPlan() {
+  const el = document.getElementById("plan");
+  el.innerHTML = SYSTEMEN.map(s => `
+    <div class="systeem" style="--c:${s.kleur}">
+      <div class="syshead"><h3>${s.naam}</h3><span class="pct" id="p-${s.id}">0%</span></div>
+      <div class="sysbev">${s.bev}</div>
+      ${s.items.map(id => {
+        const x = ITEMS[id];
+        if (x.recept) return `<div class="kaart" id="k-${id}"><div></div><div class="kbody"><div class="ktop"><div class="ktitle">${esc(x.title)}</div><span class="kcost" id="rxstat-${id}"></span></div><div class="kdesc">Zie <a href="#recepten" data-go="recepten">Geheime recepten</a>.</div></div></div>`;
+        const links = [];
+        if (x.address) links.push(`<a href="${mapsUrl(x.address)}" target="_blank" rel="noopener">Route in Kaarten</a>`);
+        if (x.website) links.push(`<a href="${esc(x.website)}" target="_blank" rel="noopener">Website</a>`);
+        return `<div class="kaart" id="k-${id}">
+          <input type="checkbox" class="vink" id="cb-${id}" data-cb="${id}" aria-label="Uitgevoerd: ${esc(x.title)}">
+          <div class="kbody">
+            <div class="ktop"><label class="ktitle" for="cb-${id}"><span title="${x.rain ? "Kan bij regen" : "Beter bij droog weer"}">${x.rain ? "☔" : "☀️"}</span> ${esc(x.title)}</label><span class="kcost">${esc(x.cost)}</span></div>
+            <div class="uitgesteld">Uitgesteld wegens weersomstandigheden</div>
+            <div class="kdesc">${esc(x.desc)}</div>
+            ${links.length ? `<div class="chips">${links.join("")}</div>` : ""}
+            ${extraHtml(id)}
+          </div></div>`;
+      }).join("")}
+    </div>`).join("");
+}
+
+function rxSealed(el, wanneer) {
+  el.innerHTML = `<div class="rxhead"><span>RECEPT</span><span>Ziekenhuis Vestland</span></div>
+    <div class="sealed"><div class="lak" aria-hidden="true"><span>B</span></div>
+    <p>Verzegeld. Dit recept wordt op het juiste moment voorgeschreven.</p>
+    <div class="when">Vrijgave: ${esc(fmtKort.format(osloToDate(wanneer)))}</div></div>`;
+}
+function bouwRecepten() {
+  const nu = now();
+  const sauna = document.getElementById("rxSauna"), lys = document.getElementById("rxLys");
+  const saunaOpen = nu >= osloToDate(OPEN_SAUNA), lysOpen = nu >= osloToDate(OPEN_LYSVERKET);
+  if (sauna.dataset.open !== String(saunaOpen)) {
+    sauna.dataset.open = String(saunaOpen);
+    if (!saunaOpen) rxSealed(sauna, OPEN_SAUNA);
+    else sauna.innerHTML = `<div class="rxhead"><span>RECEPT 1</span><span>Datum: ${fmtDatum.format(osloToDate(OPEN_SAUNA))}</span></div>
+      <div class="rxsym">R<span>/</span></div>
+      <div class="script">Warmte, gevolgd door koude. Eenmalig, samen.</div>
+      <div class="info"><p>Twee gelijkwaardige behandelopties; beide tellen even zwaar voor het zenuwstelsel. De behandelend arts kiest.</p></div>
+      <div class="opties" role="radiogroup" aria-label="Behandelvorm">
+        <label class="optie"><input type="radio" name="sauna" value="strand" id="opt-strand"><span><b>A. Koude zee bij Nordnes</b><small>Nordnes Sjøbad, Nordnesparken 30: verwarmd buitenbad naast de zee. Winteropenstelling onder meer do 16:00 tot 21:00 en za 10:00 tot 15:00; kr 95 p.p. Het strandje ernaast is vrij toegankelijk, maar zonder voorzieningen.</small></span></label>
+        <label class="optie"><input type="radio" name="sauna" value="sauna" id="opt-sauna"><span><b>B. Drijvende sauna, Heit Bergen</b><small>Heit Bergen, Marineholmen (Thormøhlens gate 53E). Ruim van tevoren online boeken en betalen, uiterlijk 12 uur vooraf; annuleren kan kosteloos tot 24 uur ervoor. Gedeeld kr 169 per uur, privé vanaf kr 700 voor twee. Wie dezelfde dag wil: City Sauna (Solheimsgaten 3), drop-in donderdag 15:00 tot 21:00, kr 160 per uur.</small></span></label>
+      </div>
+      <div class="chips" id="saunaLinks"></div>
+      ${extraHtml("rx-sauna")}
+      <label class="behandeld"><input type="checkbox" class="vink" data-cb="rx-sauna" id="cb-rx-sauna"> Behandeld</label>
+      <div class="signer"><span>Voorgeschreven door</span><span class="hand">Tess</span></div>`;
+  }
+  if (lys.dataset.open !== String(lysOpen)) {
+    lys.dataset.open = String(lysOpen);
+    if (!lysOpen) rxSealed(lys, OPEN_LYSVERKET);
+    else lys.innerHTML = `<div class="rxhead"><span>RECEPT 2</span><span>Datum: ${fmtDatum.format(osloToDate(OPEN_LYSVERKET))}</span></div>
+      <div class="rxsym">R<span>/</span></div>
+      <div class="script">Diner bij Lysverket. Vrijdag 23 oktober, ${LYSVERKET_TIJD ? esc(LYSVERKET_TIJD) : "tijd volgt"}.</div>
+      <div class="sig">S. eenmalig, samen, zonder haast.</div>
+      <div class="info"><p>Werkt in op het hart; telt mee voor het orgaansysteem Hart.</p><p>Restaurant met één Michelinster, in KODE 4 aan Rasmus Meyers allé 9. Open di t/m za vanaf 18:00.</p></div>
+      <div class="chips"><a href="${mapsUrl("Lysverket, Rasmus Meyers allé 9, 5015 Bergen")}" target="_blank" rel="noopener">Route in Kaarten</a><a href="https://www.lysverket.no/" target="_blank" rel="noopener">Website</a><a href="https://booking.gastroplanner.no/lysverket/t" target="_blank" rel="noopener">Reservering</a>
+      <button class="pill" data-book="lysverket" id="book-lysverket"></button></div>
+      ${extraHtml("lysverket")}
+      <label class="behandeld"><input type="checkbox" class="vink" data-cb="lysverket" id="cb-lysverket"> Behandeld</label>
+      <div class="signer"><span>Voorgeschreven door</span><span class="hand">Tess</span></div>`;
+  }
+}
+
+/* ===== Berekening ===== */
+function sysPct(s) { return Math.round(s.items.filter(id => it(id).done).length / s.items.length * 100); }
+function totaal() { const p = SYSTEMEN.map(sysPct); return Math.floor(p.reduce((a, b) => a + b, 0) / p.length); }
+function faseIdx(t) { return GRENZEN.filter(g => t >= g).length; }
+
+/* ===== Bijwerken (geen herbouw, zodat focus en invoer blijven staan) ===== */
+let laatsteFase = -1;
+function update() {
+  bouwRecepten();
+  const nu = now(), regen = weerNu() === "regen";
+  // Weer
+  document.getElementById("wxIcon").textContent = regen ? "☔" : "☀️";
+  document.getElementById("wxState").textContent = regen ? "Regen" : "Droog";
+  let src;
+  if (S.weer) src = "Handmatig ingesteld door het behandelteam.";
+  else if (autoWeer && autoWeer.demo) src = "Testmodus.";
+  else if (autoWeer) src = `Open-Meteo: ${autoWeer.temp != null ? Math.round(autoWeer.temp) + " °C, " : ""}neerslagkans ${autoWeer.kans != null ? autoWeer.kans + "%" : "onbekend"}${autoWeer.mm != null ? ", " + String(autoWeer.mm).replace(".", ",") + " mm verwacht" : ""}.`;
+  else src = "Geen live weerbericht in deze weergave. Stel de weerstatus zelf in na een blik uit het raam.";
+  document.getElementById("wxSrc").textContent = src;
+  ["wxAuto", "wxDroog", "wxRegen"].forEach(b => { const el = document.getElementById(b); el.setAttribute("aria-pressed", String((el.dataset.wx || "") === (S.weer || ""))); });
+  const bel = document.getElementById("beleid");
+  bel.className = "beleid" + (regen ? "" : " droog");
+  bel.textContent = regen ? "Beleid: alleen behandelingen met ☔. Behandelingen met ☀️ blijven in het plan, maar zijn uitgesteld wegens weersomstandigheden." : "Beleid: alle behandelingen toegestaan.";
+  const dag = Math.floor((osloToDate(osloYmd(nu)) - osloToDate("2026-10-20")) / 864e5) + 1;
+  let dagTekst;
+  if (dag < 1) dagTekst = "Opname gepland op dinsdag 20 oktober. Aankomst behandelend arts 16:50, Flesland. Vervoer per Bybanen lijn 1 naar Byparken: circa 45 minuten, kr 51, kaartje vooraf in de Skyss-app of bij de automaat.";
+  else if (dag > 5) dagTekst = "Patiënt is met ontslag. Visite niet meer van toepassing.";
+  else dagTekst = `${fmtDag.format(nu).replace(/^./, c => c.toUpperCase())}. Opnamedag ${dag} van 5.`;
+  document.getElementById("visiteDag").textContent = dagTekst;
+
+  // Kaarten
+  Object.keys(ITEMS).forEach(id => {
+    const x = it(id), k = document.getElementById("k-" + id);
+    if (k) {
+      k.classList.toggle("done", !!x.done);
+      k.classList.toggle("off", regen && !ITEMS[id].rain && !ITEMS[id].recept);
+    }
+    document.querySelectorAll(`[data-cb="${id}"]`).forEach(cb => { cb.checked = !!x.done; cb.disabled = regen && !ITEMS[id].rain && !x.done; });
+    const ta = document.getElementById("note-" + id);
+    if (ta && document.activeElement !== ta && ta.value !== (x.note || "")) ta.value = x.note || "";
+    const ex = document.getElementById("ex-" + id);
+    if (ex && (x.note || FOTOS[id]) && !ex.dataset.auto) { ex.open = true; ex.dataset.auto = "1"; }
+    const th = document.getElementById("thumb-" + id), weg = document.getElementById("fotoweg-" + id);
+    if (th) { const f = FOTOS[id]; th.hidden = !f; if (f && th.getAttribute("src") !== f) th.src = f; if (weg) weg.hidden = !f; }
+    const bk = document.getElementById("book-" + id);
+    if (bk) { bk.className = "pill" + (x.booked ? " ok" : ""); bk.textContent = id === "lysverket" ? (x.booked ? "Reservering staat op vrijdag" : "Reservering nog verzetten naar vrijdag") : (x.booked ? "Geboekt" : "Nog niet geboekt; tik als geboekt"); }
+  });
+  document.querySelectorAll("[data-agenda]").forEach(a => a.hidden = !downloads);
+  document.querySelectorAll("[data-ag]").forEach(a => a.hidden = (a.dataset.ag === "1") !== !!downloads);
+  const rxs = id => { const x = it(id); return x.done ? "behandeld" : (nu >= osloToDate(id === "lysverket" ? OPEN_LYSVERKET : OPEN_SAUNA) ? "voorgeschreven" : "verzegeld"); };
+  ["rx-sauna", "lysverket"].forEach(id => { const el = document.getElementById("rxstat-" + id); if (el) el.textContent = rxs(id); });
+  // Sauna-keuze
+  const sx = it("rx-sauna");
+  document.querySelectorAll('input[name="sauna"]').forEach(r => r.checked = r.value === sx.keuze);
+  const sl = document.getElementById("saunaLinks");
+  if (sl) {
+    const html = sx.keuze === "sauna"
+      ? `<a href="${mapsUrl("Heit Bergen, Thormøhlens gate 53E, 5008 Bergen")}" target="_blank" rel="noopener">Route naar Heit</a><a href="https://heitbergen.no/sauna-info" target="_blank" rel="noopener">Heit boeken</a><a href="https://www.citysauna.no/en" target="_blank" rel="noopener">City Sauna</a><a href="${mapsUrl("City Sauna, Solheimsgaten 3, 5058 Bergen")}" target="_blank" rel="noopener">Route naar City Sauna</a><button class="pill${sx.booked ? " ok" : ""}" data-book="rx-sauna" id="book-rx-sauna">${sx.booked ? "Geboekt" : "Nog niet geboekt; tik als geboekt"}</button>`
+      : sx.keuze === "strand" ? `<a href="${mapsUrl("Nordnes Sjøbad, Nordnesparken 30, 5005 Bergen")}" target="_blank" rel="noopener">Route naar Nordnes</a><a href="https://nordnessjobad.no/apningstider/" target="_blank" rel="noopener">Openingstijden</a>` : "";
+    if (sl.dataset.k !== sx.keuze + sx.booked) { sl.dataset.k = sx.keuze + sx.booked; sl.innerHTML = html; }
+  }
+
+  // Meters
+  SYSTEMEN.forEach(s => {
+    const p = sysPct(s);
+    document.getElementById("m-" + s.id).textContent = p + "%";
+    document.getElementById("p-" + s.id).textContent = p + "%";
+    const b = document.getElementById("b-" + s.id); b.setAttribute("aria-valuenow", p); b.firstElementChild.style.width = p + "%";
+  });
+  const t = totaal(), f = faseIdx(t);
+  document.getElementById("totPct").textContent = t;
+  document.getElementById("miniPct").textContent = t + "%";
+  document.getElementById("miniBar").style.width = t + "%";
+  document.getElementById("fase").textContent = "Fase: " + FASES[f].toLowerCase();
+  if (f !== laatsteFase) { laatsteFase = f; document.querySelectorAll("#fig > [data-fase]").forEach(d => d.hidden = +d.dataset.fase !== f); }
+
+  bouwDecursus();
+  bouwOntslag(t);
+}
+
+function gedaan() {
+  return Object.keys(ITEMS).filter(id => it(id).done).sort((a, b) => (it(a).t || 0) - (it(b).t || 0));
+}
+function titel(id) { if (id === "rx-sauna") { const k = it(id).keuze; return k === "strand" ? "Koude zee bij Nordnes (recept 1)" : k === "sauna" ? "Drijvende sauna (recept 1)" : "Warmte en koude (recept 1)"; } if (id === "lysverket") return "Diner bij Lysverket (recept 2)"; return ITEMS[id].title; }
+function wanneer(id) { const t = it(id).t; return t ? fmtKort.format(new Date(t)) : "tijdstip onbekend"; }
+function bouwDecursus() {
+  const el = document.getElementById("decList"), ids = gedaan();
+  const sig = ids.map(id => id + it(id).note + (FOTOS[id] ? FOTOS[id].length : 0)).join("|");
+  if (el.dataset.sig === sig && el.dataset.sig !== undefined && el.innerHTML) return;
+  el.dataset.sig = sig;
+  el.innerHTML = ids.length ? ids.map(id => `<div class="dec"><div class="when">${esc(wanneer(id))}</div><div><div class="what">${esc(titel(id))}</div><div class="hand">${esc(it(id).note) || ""}</div>${FOTOS[id] ? `<img src="${FOTOS[id]}" alt="Foto bij ${esc(titel(id))}">` : ""}</div></div>`).join("")
+    : `<p class="leeg">Nog geen behandelingen uitgevoerd. Een notitie verschijnt hier zodra de behandeling is afgevinkt.</p>`;
+}
+
+function bouwOntslag(t) {
+  const el = document.getElementById("ontslagInhoud"), nu = now(), uiterlijk = osloToDate(ONTSLAG_UITERLIJK);
+  const open = t >= 100 || nu >= uiterlijk;
+  const ids = gedaan();
+  const sig = [open, t, ids.map(id => id + it(id).note + (FOTOS[id] ? FOTOS[id].length : 0) + it(id).keuze).join("|"), osloYmd(nu)].join("#");
+  if (el.dataset.sig === sig) return;
+  el.dataset.sig = sig;
+  if (!open) {
+    const crit = SYSTEMEN.map(s => `<li><span class="bx">${sysPct(s) >= 100 ? "[x]" : "[ ]"}</span><span>${s.naam}: <span class="num">${sysPct(s)}%</span></span></li>`).join("");
+    el.innerHTML = `<h2>Ontslagbrief</h2><div class="dicht"><p class="lead">Ontslag is nog niet aan de orde. De brief wordt opgesteld zodra alle orgaansystemen op 100% staan, en uiterlijk ${esc(fmtKort.format(uiterlijk))}.</p><ul class="criteria">${crit}</ul></div>`;
+    return;
+  }
+  const hersteld = t >= 100;
+  const ontslagDatum = hersteld && nu < uiterlijk ? nu : uiterlijk;
+  const nietGedaan = Object.keys(ITEMS).filter(id => !it(id).done);
+  const verloop = ids.length ? `<ul>${ids.map(id => `<li><b>${esc(titel(id))}</b> <span class="num" style="color:var(--ink-3);font-size:13px">(${esc(wanneer(id))})</span>${it(id).note ? `<span class="noot">${esc(it(id).note)}</span>` : ""}${FOTOS[id] ? `<div class="fotos"><img src="${FOTOS[id]}" alt="Foto bij ${esc(titel(id))}"></div>` : ""}</li>`).join("")}</ul>` : "<p>Geen behandelingen gedocumenteerd.</p>";
+  el.innerHTML = `<h2 class="noprint" style="margin-bottom:12px">Ontslagbrief</h2>
+  <div class="brief">
+    <div class="briefhead"><div><b>Ziekenhuis Vestland</b>Afdeling Interne geneeskunde</div><div class="num">Bergen, ${esc(fmtDatum.format(ontslagDatum))}</div></div>
+    <p>Aan: de huisarts van Bergen<br>Betreft: Bergen, geb. 1070, patiëntnr. 1070-5003-NO</p>
+    <p style="margin-top:10px">Geachte collega,</p>
+    <p style="margin-top:6px">Hierbij bericht ik u over bovengenoemde patiënt, die van 20-10-2026 tot ${esc(fmtDatum.format(ontslagDatum))} op onze afdeling was opgenomen.</p>
+    <h4>Reden van opname</h4><p>Anerosis bergensis (fictieve aandoening): een tekort aan dates, bestaand sinds augustus.</p>
+    <h4>Beloop</h4><p>Gedurende de opname zijn de volgende interventies uitgevoerd. Therapietrouw ${hersteld ? "uitstekend" : "goed"}. Bijwerkingen: natte schoenen, verder geen.</p>${verloop}
+    ${nietGedaan.length && !hersteld ? `<p style="margin-top:8px">Niet uitgevoerd: ${nietGedaan.map(id => esc(titel(id))).join("; ")}. Deze worden meegegeven voor de follow-up.</p>` : ""}
+    <h4>Toestand bij ontslag</h4><p class="oordeel">${hersteld ? "Klinisch hersteld." : "Klinisch stabiel, in de herstelfase."}</p><p>Totale gezondheid bij ontslag: <span class="num">${t}%</span>.</p>
+    <h4>Prognose</h4><p>${hersteld ? "Goed. Een recidief is niet uitgesloten zodra de behandelend arts vertrekt; de referentiepatiënt Nijmegen laat zien dat herhaalde interventies effectief zijn." : "Gunstig, mits de resterende interventies bij een volgende opname worden ingehaald."}</p>
+    <h4>Follow-up</h4><p>Poliklinische controle na de kerstperiode, ${CONTROLE_DATUM ? "op " + esc(CONTROLE_DATUM) : "datum nader te bepalen"}.</p>
+    <p style="margin-top:14px">Met collegiale groet,</p>
+    <div class="handtekening"><div><span class="hand">Tess</span>Tess, behandelend arts</div><div><span class="hand">Niels</span>Niels, assistent</div></div>
+  </div>
+  ${window.claude && typeof window.claude.use === "function" ? "" : `<p class="noprint" style="margin-top:12px"><button class="btn" id="printBtn">Ontslagbrief afdrukken of als PDF bewaren</button></p>`}`;
+  const pb = document.getElementById("printBtn"); if (pb) pb.onclick = () => window.print();
+}
+
+/* ===== Interactie ===== */
+function wijzig(id, fn) { fn(it(id)); saveLocal(); push(id); update(); }
+const noteTimers = {};
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.cb) { wijzig(t.dataset.cb, x => { x.done = t.checked; x.t = t.checked ? now().getTime() : 0; }); const ex = document.getElementById("ex-" + t.dataset.cb); if (ex && t.checked) ex.open = true; }
+  else if (t.name === "sauna") wijzig("rx-sauna", x => { x.keuze = t.value; });
+  else if (t.dataset.foto) fotoLaden(t.files && t.files[0], t.dataset.foto, t);
+});
+document.addEventListener("input", e => {
+  const t = e.target; if (!t.dataset.note) return;
+  const id = t.dataset.note; it(id).note = t.value.slice(0, 2000); saveLocal();
+  clearTimeout(noteTimers[id]);
+  noteTimers[id] = setTimeout(() => { delete noteTimers[id]; push(id); bouwDecursus(); bouwOntslag(totaal()); }, 700);
+});
+document.addEventListener("click", async e => {
+  const t = e.target.closest("button, a[data-go]"); if (!t) return;
+  if (t.dataset.go) { e.preventDefault(); const s = document.getElementById(t.dataset.go); if (s) s.scrollIntoView({ block: "start" }); return; }
+  if (t.dataset.wx !== undefined) { S.weer = t.dataset.wx; saveLocal(); push("algemeen"); update(); return; }
+  if (t.dataset.book) { wijzig(t.dataset.book, x => { x.booked = !x.booked; }); return; }
+  if (t.dataset.fotoweg) { delete FOTOS[t.dataset.fotoweg]; lsSet(FOTO_KEY, FOTOS); msg(t.dataset.fotoweg, ""); update(); return; }
+  if (t.dataset.ics) { msg(t.dataset.ics, await agenda(t.dataset.ics)); }
+});
+function msg(id, s) { const m = document.getElementById("msg-" + id); if (m) m.textContent = s; }
+
+function fotoLaden(file, id, input) {
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onerror = () => msg(id, "De foto kon niet worden gelezen.");
+  rd.onload = ev => {
+    const img = new Image();
+    img.onerror = () => msg(id, "Dit bestand is geen bruikbare foto.");
+    img.onload = () => {
+      const sc = Math.min(1, 700 / img.width), c = document.createElement("canvas");
+      c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      const vorige = FOTOS[id];
+      FOTOS[id] = c.toDataURL("image/jpeg", 0.7);
+      if (!lsSet(FOTO_KEY, FOTOS)) {
+        if (vorige) FOTOS[id] = vorige; else delete FOTOS[id];
+        msg(id, "Het geheugen van dit toestel is vol. Verwijder eerst een andere foto; deze is niet bewaard.");
+      } else msg(id, "");
+      if (input) input.value = "";
+      update();
+    };
+    img.src = ev.target.result;
+  };
+  rd.readAsDataURL(file);
+}
+
+async function agenda(id) {
+  if (!downloads) return "Opslaan is hier niet beschikbaar.";
+  const d = document.getElementById("date-" + id).value, tm = document.getElementById("time-" + id).value || "12:00";
+  if (!d) return "Kies eerst een datum.";
+  const start = osloToDate(d + "T" + tm), end = new Date(start.getTime() + 36e5);
+  const f = x => x.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const icsEsc = s => String(s || "").replace(/\\/g, "\\\\").replace(/[,;]/g, m => "\\" + m).replace(/\n/g, " ");
+  const x = ITEMS[id];
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Bergen met Tess//NL", "BEGIN:VEVENT",
+    "UID:" + id + "-" + Date.now() + "@bergen-tess", "DTSTAMP:" + f(new Date()), "DTSTART:" + f(start), "DTEND:" + f(end),
+    "SUMMARY:" + icsEsc(titel(id)), "DESCRIPTION:" + icsEsc(x.desc || "Behandeling uit het dossier Bergen"),
+    x.address ? "LOCATION:" + icsEsc(x.address) : "", "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+  try { await downloads.save({ filename: id + ".ics", data: ics }); return "Agendabestand opgeslagen."; }
+  catch (e) { const c = e && e.code; if (c === "declined") return "Niet opgeslagen."; if (c === "rate_limited") return "Er staat al een opslagvraag open; probeer het zo opnieuw."; return "Opslaan is niet gelukt."; }
+}
+
+/* Actieve ruiter volgen */
+const ruiters = [...document.querySelectorAll(".ruiter")];
+if ("IntersectionObserver" in window) {
+  const io = new IntersectionObserver(ents => ents.forEach(en => {
+    if (en.isIntersecting) ruiters.forEach(r => { const on = r.dataset.go === en.target.id; r.setAttribute("aria-current", String(on)); if (on) r.scrollIntoView({ block: "nearest", inline: "nearest" }); });
+  }), { rootMargin: "-30% 0px -60% 0px" });
+  document.querySelectorAll("section.vel").forEach(s => io.observe(s));
+  const st = document.getElementById("stempel");
+  const io2 = new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) { st.classList.add("in"); io2.disconnect(); } }), { threshold: .6 });
+  io2.observe(st);
+}
+
+/* ===== Start ===== */
+if (DEMO) document.getElementById("testlabel").hidden = false;
+bouwMeters(); bouwPlan(); update();
+startDb();
+haalWeer();
+if (window.claude && typeof window.claude.use === "function") {
+  window.claude.use("downloads").then(d => { if (d) { downloads = d; update(); } }).catch(() => {});
+}
+// Ontgrendelmomenten zonder herladen oppakken.
+setInterval(() => { if (!DEMO) update(); }, 60000);
+</script>
+
+</body>
+</html>
