@@ -554,7 +554,7 @@ const SYSTEMEN = [
   { id: "longen", naam: "Longen", kleur: "var(--s-long)", bev: "Bevinding: te weinig frisse lucht op hoogte.", items: ["floyen", "sandviksbatteriet", "daytrip"] },
   { id: "maag", naam: "Maag-darmstelsel", kleur: "var(--s-maag)", bev: "Bevinding: onvoldoende lokale intake.", items: ["hotdog", "vismarkt", "tasting"] },
   { id: "zenuw", naam: "Zenuwstelsel", kleur: "var(--s-zenuw)", bev: "Bevinding: verhoogde spanning; ontspanning volgt op recept.", items: ["rx-sauna"] },
-  { id: "geheugen", naam: "Geheugen en stemming", kleur: "var(--s-geh)", bev: "Bevinding: sinds augustus weinig nieuwe herinneringen aangelegd.", items: ["chocomelk", "picknick"] },
+  { id: "geheugen", naam: "Geheugen en stemming", kleur: "var(--s-geh)", bev: "Bevinding: sinds augustus weinig nieuwe herinneringen aangelegd.", items: ["chocomelk", "picknick", "parkn"] },
 ];
 const ITEMS = {
   bryggen: { title: "Bryggen", cost: "gratis", rain: true, desc: "De houten Hanzekade, UNESCO-werelderfgoed. Rondwandelen is gratis en werkt ook onder een paraplu. Toediening: wandelend, in eigen tempo.", address: "Bryggen, 5003 Bergen", website: "https://en.visitbergen.com/things-to-do/bryggen-in-bergen-p878553" },
@@ -568,6 +568,7 @@ const ITEMS = {
   tasting: { title: "Brunost met rendier", cost: "kr 215 à 585", rain: true, desc: "Bryggen Tracteursted: rendierfilet gevuld met bruine geitenkaas (kr 585), of rendiertartaar als kleinere dosis (kr 215). Open wo t/m zo 17:00 tot 23:00, laatste tafel 21:00.", address: "Bryggen Tracteursted, Bryggestredet 2, 5003 Bergen", website: "https://bryggentracteursted.no/" },
   chocomelk: { title: "Warme chocolademelk bij het hutje", cost: "nog te bevestigen", rain: false, desc: "Klein hutje boven aan een wandeling, tegenover een riviertje, richting Fantoft. Niet Fjåk.", address: null, website: null },
   picknick: { title: "Wandeling met picknick", cost: "eigen eten", rain: false, desc: "Wandeling met een picknick onderweg, op een droge dag. Eerder effectief gebleken bij de referentiepatiënt (25-04).", address: null, website: null },
+  parkn: { title: "Spelletjesavond bij ParkN", cost: "kr 50 p.p. (spelhuur)", rain: true, desc: "Loungebar bij Ole Bulls plass met een spellenlounge van circa 50 bordspellen, onder meer Catan, Ticket to Ride Nordic, Pandemic, Codenames en Terraforming Mars. Indicatie: een regenachtige avond; werkt ook bij droog weer. Dosis: maximaal 3 uur per huurperiode. Open di en wo 14:00 tot 23:00, do 14:00 tot 01:00, vr en za 11:00 tot 01:00; vanaf 19:00 geldt een leeftijdsgrens van 20 jaar. Reserveren via BOOK op de website, op vrijdag- en zaterdagavond verstandig. Bewezen effectief bij de referentiepatiënt (De Witte Raaf, 17-05).", address: "ParkN, Engen 20, 5011 Bergen", website: "https://parkn.no/" },
   "rx-sauna": { title: "Recept 1: warmte en koude", cost: "", rain: true, desc: "", recept: true },
   lysverket: { title: "Recept 2: diner bij Lysverket", cost: "", rain: true, desc: "", recept: true, address: "Rasmus Meyers allé 9, 5015 Bergen" },
 };
@@ -992,6 +993,10 @@ if ("IntersectionObserver" in window) {
 if (DEMO) document.getElementById("testlabel").hidden = false;
 bouwMeters(); bouwPlan(); update();
 startDb();
+// Vinkjes van de klei-kaart (zelfde site, zelfde opslag): bij een wijziging in een ander tabblad opnieuw inlezen,
+// zodat dit tabblad ze niet bij de volgende opslag overschrijft.
+addEventListener("storage", e => { if (DEMO || col || (e.key !== KEY && e.key !== null)) return; const v = lsGet(KEY); if (v && v.items) { S = v; update(); } });
+addEventListener("pageshow", e => { if (!e.persisted || DEMO || col) return; const v = lsGet(KEY); if (v && v.items) { S = v; update(); } });
 haalWeer();
 if (window.claude && typeof window.claude.use === "function") {
   window.claude.use("downloads").then(d => { if (d) { downloads = d; update(); } }).catch(() => {});
