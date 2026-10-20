@@ -10,7 +10,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;0,700;1,400&family=Caveat:wght@500;700&family=Courier+Prime:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;0,700;1,400&family=Young+Serif&family=Caveat:wght@500;700&family=Courier+Prime:wght@400;700&display=swap">
 <style>
   /* Layout: een statusmap (manilla) met losse dossiervellen per sectie, elk met een gekleurde ruiter;
      op brede schermen staat de patiënt (figuur + meters) als vaste kaart rechts. */
@@ -26,6 +26,7 @@
     --track: #eadfc8; --shadow: rgba(84, 52, 20, .22); --hi: rgba(255, 255, 255, .7);
     --s-hart: #c4553f; --s-long: #4b82a3; --s-maag: #c98a2b; --s-zenuw: #6b7aa6; --s-geh: #5a9468;
     --f-body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --f-kop: "Young Serif", Georgia, serif;   /* koppen, zelfde als de klei-kaart */
     --f-type: "Courier Prime", "Courier New", ui-monospace, monospace;
     --f-hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
   }
@@ -136,7 +137,7 @@
     background: var(--paper); font-family: var(--f-type); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2);
     box-shadow: inset 0 3px 0 var(--tab, var(--rule)), 0 -1px 0 var(--line), 1px 0 0 var(--line), -1px 0 0 var(--line);
   }
-  .vel h2 { font-family: var(--f-type); font-size: 21px; font-weight: 700; margin-bottom: 4px; }
+  .vel h2 { font-family: var(--f-kop); font-size: 23px; font-weight: 400; margin-bottom: 4px; }
   .vel .lead { color: var(--ink-2); font-size: 15px; margin-bottom: 14px; max-width: 62ch; }
   .vel h3 { font-family: var(--f-type); font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin: 18px 0 6px; }
   .velgrid { display: grid; gap: 0 22px; }
@@ -240,6 +241,11 @@
     background-image: repeating-linear-gradient(180deg, transparent 0 24px, var(--line) 24px 25px); background-attachment: local;
   }
   .row2 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .kaartlink { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 12px 14px; border: 1.5px dashed var(--rule); border-radius: 10px; color: var(--ink); text-decoration: none; }
+  .kaartlink b { font-family: var(--f-kop); font-weight: 400; font-size: 18px; }
+  .kaartlink span { color: var(--ink-3); font-size: 13.5px; }
+  .kaartlink i { margin-left: auto; font-style: normal; font-size: 20px; color: var(--ink-2); }
+  .kaartlink:hover { background: var(--hi); }
   .btn { font-size: 14px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--rule); background: var(--paper-2); color: var(--ink); cursor: pointer; }
   .btn:hover { border-color: var(--ink-3); }
   .fotobtn { position: relative; overflow: hidden; display: inline-block; }
@@ -469,6 +475,7 @@
     <h2>Behandelplan</h2>
     <p class="lead">Interventies naar keuze van de behandelend arts, geordend per orgaansysteem. Kosten per persoon, in kronen. Spreiden over de systemen is klinisch het verstandigst: een systeem dat al op 100% staat, wordt er niet beter van.</p>
     <div id="plan"></div>
+    <a class="kaartlink" id="kaartlink" href="https://nreuvekamp-creator.github.io/bergen-klei/"><div><b>Bekijk de kaart</b><br><span>Elke behandeling als kleimarker op Bergen; afvinken telt hier mee.</span></div><i aria-hidden="true">&rsaquo;</i></a>
   </section>
 
   <section class="vel" id="decursus" style="--tab:var(--pen)">
@@ -503,9 +510,10 @@
 /* ===== Constanten (Niels vult in) ===== */
 const OPEN_SAUNA = "2026-10-22T12:00";      // Europe/Oslo
 const OPEN_LYSVERKET = "2026-10-23T12:00";  // Europe/Oslo
-const LYSVERKET_TIJD = "";                  // bv. "19:30"; leeg = "tijd volgt"
+const LYSVERKET_TIJD = "19:00";             // bv. "19:30"; leeg = "tijd volgt" (19:00 = tijd van de oude reservering, aangenomen)
+const LYSVERKET_VERZET = true;              // reservering staat al op vrijdag: vaste status in plaats van de afvinkknop
 const ONTSLAG_UITERLIJK = "2026-10-24T08:00";
-const CONTROLE_DATUM = "";                  // leeg = "datum nader te bepalen"
+const CONTROLE_DATUM = "2026-12-27";        // JJJJ-MM-DD; leeg = "datum nader te bepalen"
 const CHOCO_HUT_NAAM = "";                  // naam van het hutje met warme chocolademelk
 const OPNAME = "2026-10-20T16:50";
 const LAATSTE_DAG = "2026-10-24";
@@ -773,9 +781,9 @@ function bouwRecepten() {
       <div class="rxsym">R<span>/</span></div>
       <div class="script">Diner bij Lysverket. Vrijdag 23 oktober, ${LYSVERKET_TIJD ? esc(LYSVERKET_TIJD) : "tijd volgt"}.</div>
       <div class="sig">S. eenmalig, samen, zonder haast.</div>
-      <div class="info"><p>Werkt in op het hart; telt mee voor het orgaansysteem Hart.</p><p>Restaurant met één Michelinster, in KODE 4 aan Rasmus Meyers allé 9. Open di t/m za vanaf 18:00.</p></div>
+      <div class="info"><p>Werkt in op het hart; telt mee voor het orgaansysteem Hart.</p><p>Restaurant met één Michelinster, in KODE 4 aan Rasmus Meyers allé 9. Open di t/m za vanaf 18:00.</p><p id="lysRaam">Bijzonderheden: tafel aan het raam gereserveerd, met uitzicht naar buiten. Daglicht en uitzicht gelden als ondersteunende therapie.</p></div>
       <div class="chips"><a href="${mapsUrl("Lysverket, Rasmus Meyers allé 9, 5015 Bergen")}" target="_blank" rel="noopener">Route in Kaarten</a><a href="https://www.lysverket.no/" target="_blank" rel="noopener">Website</a><a href="https://booking.gastroplanner.no/lysverket/t" target="_blank" rel="noopener">Reservering</a>
-      <button class="pill" data-book="lysverket" id="book-lysverket"></button></div>
+      ${LYSVERKET_VERZET ? `<span class="pill ok" id="lysStatus">Reservering verzet naar vrijdag${LYSVERKET_TIJD ? " " + esc(LYSVERKET_TIJD) : ""}</span>` : `<button class="pill" data-book="lysverket" id="book-lysverket"></button>`}</div>
       ${extraHtml("lysverket")}
       <label class="behandeld"><input type="checkbox" class="vink" data-cb="lysverket" id="cb-lysverket"> Behandeld</label>
       <div class="signer"><span>Voorgeschreven door</span><span class="hand">Tess</span></div>`;
@@ -903,7 +911,7 @@ function bouwOntslag(t) {
     ${nietGedaan.length && !hersteld ? `<p style="margin-top:8px">Niet uitgevoerd: ${nietGedaan.map(id => esc(titel(id))).join("; ")}. Deze worden meegegeven voor de follow-up.</p>` : ""}
     <h4>Toestand bij ontslag</h4><p class="oordeel">${hersteld ? "Klinisch hersteld." : "Klinisch stabiel, in de herstelfase."}</p><p>Totale gezondheid bij ontslag: <span class="num">${t}%</span>.</p>
     <h4>Prognose</h4><p>${hersteld ? "Goed. Een recidief is niet uitgesloten zodra de behandelend arts vertrekt; de referentiepatiënt Nijmegen laat zien dat herhaalde interventies effectief zijn." : "Gunstig, mits de resterende interventies bij een volgende opname worden ingehaald."}</p>
-    <h4>Follow-up</h4><p>Poliklinische controle na de kerstperiode, ${CONTROLE_DATUM ? "op " + esc(CONTROLE_DATUM) : "datum nader te bepalen"}.</p>
+    <h4>Follow-up</h4><p>Poliklinische controle na de kerstperiode, ${CONTROLE_DATUM ? "op " + esc(fmtDag.format(osloToDate(CONTROLE_DATUM + "T12:00"))) + "; de assistent komt hiervoor naar de behandelend arts toe" : "datum nader te bepalen"}.</p>
     <p style="margin-top:14px">Met collegiale groet,</p>
     <div class="handtekening"><div><span class="hand">Tess</span>Tess, behandelend arts</div><div><span class="hand">Niels</span>Niels, assistent</div></div>
   </div>
