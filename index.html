@@ -108,7 +108,7 @@
   .layout { max-width: 1120px; margin: 0 auto; padding-top: 18px; display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 980px) {
     .layout { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; column-gap: 32px; }
-    .layout > .vel, .layout > .sticker { grid-column: 1; }
+    .layout > .vel, .layout > .sticker, .layout > .ontslagen { grid-column: 1; }
     #status { grid-column: 2; grid-row: 1 / span 12; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); }
   }
 
@@ -314,6 +314,17 @@
   .oordeel { font-family: var(--f-type); font-weight: 700; font-size: 19px; color: var(--ok); }
   .handtekening { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 22px; font-size: 13px; color: var(--ink-3); font-family: var(--f-type); }
   .handtekening .hand { font-size: 30px; color: var(--pen); display: block; line-height: 1; border-bottom: 1px solid var(--rule); padding-bottom: 2px; margin-bottom: 4px; }
+  .brief .meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; font-size: 14.5px; margin: 0; }
+  .brief .meta dt { color: var(--ink-3); font-family: var(--f-type); font-size: 13px; padding-top: 2px; }
+  .brief .meta dd { margin: 0; }
+  .brief .sys { margin-top: 10px; }
+  .brief .sys b.sn { font-family: var(--f-type); font-size: 14px; }
+  .brief .sys ul { margin-top: 2px; }
+  .brief .slot { margin-top: 16px; font-style: italic; color: var(--ink-2); }
+  .ontslagen { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; padding: 12px 14px; border-radius: 10px; border: 2px solid var(--ok); background: var(--ok-bg); color: var(--ink); }
+  .ontslagen .st { font-family: var(--f-type); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ok); font-size: 15px; }
+  .ontslagen p { margin: 2px 0 0; font-size: 14px; color: var(--ink-2); }
+  .ontslagen a { font-weight: 700; color: var(--ink); background: var(--paper); border: 1px solid var(--ok); border-radius: 999px; padding: 8px 14px; text-decoration: none; white-space: nowrap; }
   .dicht { display: grid; gap: 8px; }
   .criteria { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: 14.5px; }
   .criteria li { display: flex; gap: 8px; }
@@ -360,12 +371,18 @@
       <dt>Patiënt</dt><dd>Bergen</dd>
       <dt>Geb.</dt><dd>1070</dd>
       <dt>Opname</dt><dd>20-10-2026</dd>
+      <dt id="stOntslagT" hidden>Ontslag</dt><dd id="stOntslagD" hidden>24-10-2026</dd>
       <dt>Afdeling</dt><dd>Vestland, kamer 5003</dd>
       <dt>Beh. arts</dt><dd>Tess</dd>
       <dt>Assistent</dt><dd>Niels</dd>
     </dl>
     <div class="barcode" aria-hidden="true"></div>
     <div class="pnr num">PATIËNTNR. 1070-5003-NO</div>
+  </div>
+
+  <div class="ontslagen" id="ontslagBanner" hidden>
+    <div><div class="st">Status: ontslagen</div><p>24-10-2026, klinisch hersteld. Alle behandelingen toegediend.</p></div>
+    <a href="#ontslag" data-go="ontslag">Lees de ontslagbrief</a>
   </div>
 
   <section class="vel" id="anamnese" style="--tab:var(--clay)">
@@ -516,6 +533,8 @@ const ONTSLAG_UITERLIJK = "2026-10-24T08:00";
 const CONTROLE_DATUM = "2026-12-27";        // JJJJ-MM-DD; leeg = "datum nader te bepalen"
 const CHOCO_HUT_NAAM = "";                  // naam van het hutje met warme chocolademelk
 const OPNAME = "2026-10-20T16:50";
+const AFGEROND = true;                      // bezoek voorbij: alles toegediend, 100%, recepten open, ontslagbrief zichtbaar (op elk toestel)
+const ONTSLAG_DATUM = "2026-10-24";
 const LAATSTE_DAG = "2026-10-24";
 
 /* ===== Tijd in Europe/Oslo ===== */
@@ -559,24 +578,22 @@ addEventListener("hashchange", e => { if (/#demo/.test(e.oldURL + e.newURL)) loc
 /* ===== Behandelingen ===== */
 const SYSTEMEN = [
   { id: "hart", naam: "Hart", kleur: "var(--s-hart)", bev: "Bevinding: weinig warmte in het dagritme.", items: ["bryggen", "klee", "vagal", "lysverket"] },
-  { id: "longen", naam: "Longen", kleur: "var(--s-long)", bev: "Bevinding: te weinig frisse lucht op hoogte.", items: ["floyen", "sandviksbatteriet", "daytrip"] },
+  { id: "longen", naam: "Longen", kleur: "var(--s-long)", bev: "Bevinding: te weinig frisse lucht op hoogte.", items: ["floyen", "daytrip"] },
   { id: "maag", naam: "Maag-darmstelsel", kleur: "var(--s-maag)", bev: "Bevinding: onvoldoende lokale intake.", items: ["hotdog", "vismarkt", "tasting"] },
   { id: "zenuw", naam: "Zenuwstelsel", kleur: "var(--s-zenuw)", bev: "Bevinding: verhoogde spanning; ontspanning volgt op recept.", items: ["rx-sauna"] },
-  { id: "geheugen", naam: "Geheugen en stemming", kleur: "var(--s-geh)", bev: "Bevinding: sinds augustus weinig nieuwe herinneringen aangelegd.", items: ["chocomelk", "picknick", "parkn"] },
+  { id: "geheugen", naam: "Geheugen en stemming", kleur: "var(--s-geh)", bev: "Bevinding: sinds augustus weinig nieuwe herinneringen aangelegd.", items: ["chocomelk", "picknick"] },
 ];
 const ITEMS = {
   bryggen: { title: "Bryggen", cost: "gratis", rain: true, desc: "De houten Hanzekade, UNESCO-werelderfgoed. Rondwandelen is gratis en werkt ook onder een paraplu. Toediening: wandelend, in eigen tempo.", address: "Bryggen, 5003 Bergen", website: "https://en.visitbergen.com/things-to-do/bryggen-in-bergen-p878553" },
   klee: { title: "Café Klee", cost: "kr 100 à 150", rain: true, desc: "Favoriet van de assistent: veel planten, goede koffie en matcha, gebak. Herhaling toegestaan. Open ma t/m za 09:00 tot 17:00, zo 11:00 tot 17:00.", address: "Herman Foss gate 12, 5007 Bergen", website: "https://kleekaffe.no/en/" },
   vagal: { title: "Vågal", cost: "kr 100 à 150", rain: true, desc: "Knus, veel loungebanken; overdag café, 's avonds wijnbar. Matcha volgens de assistent een 7 uit 10. Open vanaf 12:00, op vrijdag en zaterdag tot laat.", address: "Kong Oscars gate 10, 5017 Bergen", website: "https://www.facebook.com/vagalbergen/" },
   floyen: { title: "Fløyen, te voet", cost: "gratis", rain: false, desc: "Naar boven lopen in plaats van de kabelbaan. Uitzicht over de hele patiënt.", address: "Fløibanen, Vetrlidsallmenningen 23A, 5014 Bergen", website: "https://www.floyen.no/en/" },
-  sandviksbatteriet: { title: "Sandviksbatteriet", cost: "gratis", rain: false, desc: "Oud fort boven Sandviken, met uitzicht over stad, fjord en Askøy. Ongeveer 1,8 km en 166 hoogtemeters per richting; laatste stuk steil. Reken op circa 2 uur heen en terug.", address: "Sandviksbatteriet, Fjellveien, Bergen", website: "https://ut.no/turforslag/1112154797/tur-til-sandviksbatteriet-friluftsomrade-bergen" },
   daytrip: { title: "Dagtrip met hike", cost: "kr 0 à 300 (vervoer)", rain: false, desc: "Kies de dag met het beste weerbericht; pas kort van tevoren vastleggen.", address: null, website: null },
   hotdog: { title: "Hotdog bij Trekroneren", cost: "kr ~99 (onbevestigd)", rain: true, desc: "De klassieke toeristenversie, sinds 1946, ook met rendierworst in lompe. Een bekende toeristenval, hier bewust en eenmalig voorgeschreven.", address: "Trekroneren, Kong Oscars gate 1, 5017 Bergen", website: null },
   vismarkt: { title: "Visbrood op de vismarkt", cost: "kr ~140", rain: true, desc: "Fisketorget, overdekte hal (Mathallen), het hele jaar open. Het klassieke visbrød (broodje vis) is hier de standaardbehandeling. Prijs is een schatting.", address: "Torget, 5014 Bergen", website: "https://en.visitbergen.com/things-to-do/shopping/fish-market" },
   tasting: { title: "Brunost met rendier", cost: "kr 215 à 585", rain: true, desc: "Bryggen Tracteursted: rendierfilet gevuld met bruine geitenkaas (kr 585), of rendiertartaar als kleinere dosis (kr 215). Open wo t/m zo 17:00 tot 23:00, laatste tafel 21:00.", address: "Bryggen Tracteursted, Bryggestredet 2, 5003 Bergen", website: "https://bryggentracteursted.no/" },
   chocomelk: { title: "Warme chocolademelk bij het hutje", cost: "nog te bevestigen", rain: false, desc: "Klein hutje boven aan een wandeling, tegenover een riviertje, richting Fantoft. Niet Fjåk.", address: null, website: null },
   picknick: { title: "Wandeling met picknick", cost: "eigen eten", rain: false, desc: "Wandeling met een picknick onderweg, op een droge dag. Eerder effectief gebleken bij de referentiepatiënt (25-04).", address: null, website: null },
-  parkn: { title: "Spelletjesavond bij ParkN", cost: "kr 50 p.p. (spelhuur)", rain: true, desc: "Loungebar bij Ole Bulls plass met een spellenlounge van circa 50 bordspellen, onder meer Catan, Ticket to Ride Nordic, Pandemic, Codenames en Terraforming Mars. Indicatie: een regenachtige avond; werkt ook bij droog weer. Dosis: maximaal 3 uur per huurperiode. Open di en wo 14:00 tot 23:00, do 14:00 tot 01:00, vr en za 11:00 tot 01:00; vanaf 19:00 geldt een leeftijdsgrens van 20 jaar. Reserveren via BOOK op de website, op vrijdag- en zaterdagavond verstandig. Bewezen effectief bij de referentiepatiënt (De Witte Raaf, 17-05).", address: "ParkN, Engen 20, 5011 Bergen", website: "https://parkn.no/" },
   "rx-sauna": { title: "Recept 1: warmte en koude", cost: "", rain: true, desc: "", recept: true },
   lysverket: { title: "Recept 2: diner bij Lysverket", cost: "", rain: true, desc: "", recept: true, address: "Rasmus Meyers allé 9, 5015 Bergen" },
 };
@@ -597,11 +614,20 @@ let FOTOS = lsGet(FOTO_KEY) || {};
 // Eenmalige overname uit de vorige versie van de site (zelfde opslag).
 if (!DEMO && !lsGet(KEY)) {
   const oldC = lsGet("bergen-tess-checked") || {}, oldP = lsGet("bergen-tess-photos") || {}, oldB = lsGet("bergen-tess-booked") || {};
-  const map = { "t-bryggen": "bryggen", "t-floyen": "floyen", "t-sandvik": "sandviksbatteriet", "d-hike-picknick": "picknick", "d-chocomelk": "chocomelk", "sauna-heit": "rx-sauna", "sauna-city": "rx-sauna" };
+  const map = { "t-bryggen": "bryggen", "t-floyen": "floyen", "d-hike-picknick": "picknick", "d-chocomelk": "chocomelk", "sauna-heit": "rx-sauna", "sauna-city": "rx-sauna" };
   Object.keys(oldC).forEach(k => { const id = map[k] || k; if (oldC[k] && ITEMS[id]) it(id).done = true; });
   Object.keys(oldB).forEach(k => { const id = map[k] || k; if (oldB[k] && ITEMS[id]) it(id).booked = true; });
   Object.keys(oldP).forEach(k => { const id = map[k] || k; if (ITEMS[id] && !FOTOS[id]) FOTOS[id] = oldP[k]; });
   if (Object.keys(S.items).length) { lsSet(KEY, S); lsSet(FOTO_KEY, FOTOS); }
+}
+// Vaste afgeronde stand: alles toegediend, sauna = Laugaren. Notities en foto's blijven zoals ze zijn.
+const AFGEROND_T = { lysverket: "2026-10-23T19:00" };
+function afronden() {
+  if (!AFGEROND) return;
+  let anders = false;
+  Object.keys(ITEMS).forEach(id => { const x = it(id); if (!x.done) { x.done = true; x.t = x.t || (AFGEROND_T[id] ? osloToDate(AFGEROND_T[id]).getTime() : 0); anders = true; } });
+  const sx = it("rx-sauna"); if (sx.keuze !== "laugaren") { sx.keuze = "laugaren"; sx.booked = true; anders = true; }
+  if (anders && !DEMO && !col) saveLocal(); // zelfde opslag als de klei-kaart: die ziet dan ook alles als gedaan
 }
 function it(id) { return S.items[id] || (S.items[id] = { done: false, note: "", booked: false, keuze: "", t: 0 }); }
 function saveLocal() { lsSet(KEY, S); }
@@ -757,17 +783,18 @@ function rxSealed(el, wanneer) {
 function bouwRecepten() {
   const nu = now();
   const sauna = document.getElementById("rxSauna"), lys = document.getElementById("rxLys");
-  const saunaOpen = nu >= osloToDate(OPEN_SAUNA), lysOpen = nu >= osloToDate(OPEN_LYSVERKET);
+  const saunaOpen = AFGEROND || nu >= osloToDate(OPEN_SAUNA), lysOpen = AFGEROND || nu >= osloToDate(OPEN_LYSVERKET);
   if (sauna.dataset.open !== String(saunaOpen)) {
     sauna.dataset.open = String(saunaOpen);
     if (!saunaOpen) rxSealed(sauna, OPEN_SAUNA);
     else sauna.innerHTML = `<div class="rxhead"><span>RECEPT 1</span><span>Datum: ${fmtDatum.format(osloToDate(OPEN_SAUNA))}</span></div>
       <div class="rxsym">R<span>/</span></div>
       <div class="script">Warmte, gevolgd door koude. Eenmalig, samen.</div>
-      <div class="info"><p>Twee gelijkwaardige behandelopties; beide tellen even zwaar voor het zenuwstelsel. De behandelend arts kiest.</p></div>
+      <div class="info"><p>${AFGEROND ? "De behandelend arts heeft gekozen voor optie C, Laugaren. Opties A en B zijn overwogen en niet toegepast." : "Twee gelijkwaardige behandelopties; beide tellen even zwaar voor het zenuwstelsel. De behandelend arts kiest."}</p></div>
       <div class="opties" role="radiogroup" aria-label="Behandelvorm">
         <label class="optie"><input type="radio" name="sauna" value="strand" id="opt-strand"><span><b>A. Koude zee bij Nordnes</b><small>Nordnes Sjøbad, Nordnesparken 30: verwarmd buitenbad naast de zee. Winteropenstelling onder meer do 16:00 tot 21:00 en za 10:00 tot 15:00; kr 95 p.p. Het strandje ernaast is vrij toegankelijk, maar zonder voorzieningen.</small></span></label>
         <label class="optie"><input type="radio" name="sauna" value="sauna" id="opt-sauna"><span><b>B. Drijvende sauna, Heit Bergen</b><small>Heit Bergen, Marineholmen (Thormøhlens gate 53E). Ruim van tevoren online boeken en betalen, uiterlijk 12 uur vooraf; annuleren kan kosteloos tot 24 uur ervoor. Gedeeld kr 169 per uur, privé vanaf kr 700 voor twee. Wie dezelfde dag wil: City Sauna (Solheimsgaten 3), drop-in donderdag 15:00 tot 21:00, kr 160 per uur.</small></span></label>
+        ${AFGEROND ? `<label class="optie"><input type="radio" name="sauna" value="laugaren" id="opt-laugaren"><span><b>C. Drijvende badstu Laugaren, USF Verftet</b><small>Gekozen en toegediend. Laugaren is een drijvende badstu (sauna) in de haven bij USF Verftet, Georgernes verft, 5011 Bergen, gebouwd en gerund door de vrijwilligersvereniging Bergen Laugarlag; open sinds oktober 2023. Fellesbadstu met maximaal 20 personen, een badstumester die de oven stookt, en afkoelen in het fjordwater. Geen alcohol, altijd op een handdoek zitten, niet alleen zwemmen.</small></span></label>` : ""}
       </div>
       <div class="chips" id="saunaLinks"></div>
       ${extraHtml("rx-sauna")}
@@ -783,7 +810,7 @@ function bouwRecepten() {
       <div class="sig">S. eenmalig, samen, zonder haast.</div>
       <div class="info"><p>Werkt in op het hart; telt mee voor het orgaansysteem Hart.</p><p>Restaurant met één Michelinster, in KODE 4 aan Rasmus Meyers allé 9. Open di t/m za vanaf 18:00.</p><p id="lysRaam">Bijzonderheden: tafel aan het raam gereserveerd, met uitzicht naar buiten. Daglicht en uitzicht gelden als ondersteunende therapie.</p></div>
       <div class="chips"><a href="${mapsUrl("Lysverket, Rasmus Meyers allé 9, 5015 Bergen")}" target="_blank" rel="noopener">Route in Kaarten</a><a href="https://www.lysverket.no/" target="_blank" rel="noopener">Website</a><a href="https://booking.gastroplanner.no/lysverket/t" target="_blank" rel="noopener">Reservering</a>
-      ${LYSVERKET_VERZET ? `<span class="pill ok" id="lysStatus">Reservering verzet naar vrijdag${LYSVERKET_TIJD ? " " + esc(LYSVERKET_TIJD) : ""}</span>` : `<button class="pill" data-book="lysverket" id="book-lysverket"></button>`}</div>
+      ${AFGEROND ? `<span class="pill ok" id="lysStatus">Toegediend, vrijdag 23 oktober, tafel aan het raam</span>` : LYSVERKET_VERZET ? `<span class="pill ok" id="lysStatus">Reservering verzet naar vrijdag${LYSVERKET_TIJD ? " " + esc(LYSVERKET_TIJD) : ""}</span>` : `<button class="pill" data-book="lysverket" id="book-lysverket"></button>`}</div>
       ${extraHtml("lysverket")}
       <label class="behandeld"><input type="checkbox" class="vink" data-cb="lysverket" id="cb-lysverket"> Behandeld</label>
       <div class="signer"><span>Voorgeschreven door</span><span class="hand">Tess</span></div>`;
@@ -798,6 +825,7 @@ function faseIdx(t) { return GRENZEN.filter(g => t >= g).length; }
 /* ===== Bijwerken (geen herbouw, zodat focus en invoer blijven staan) ===== */
 let laatsteFase = -1;
 function update() {
+  afronden();
   bouwRecepten();
   const nu = now(), regen = weerNu() === "regen";
   // Weer
@@ -816,7 +844,7 @@ function update() {
   const dag = Math.floor((osloToDate(osloYmd(nu)) - osloToDate("2026-10-20")) / 864e5) + 1;
   let dagTekst;
   if (dag < 1) dagTekst = "Opname gepland op dinsdag 20 oktober. Aankomst behandelend arts 16:50, Flesland. Vervoer per Bybanen lijn 1 naar Byparken: circa 45 minuten, kr 51, kaartje vooraf in de Skyss-app of bij de automaat.";
-  else if (dag > 5) dagTekst = "Patiënt is met ontslag. Visite niet meer van toepassing.";
+  else if (dag > 5 || AFGEROND) dagTekst = "Patiënt is met ontslag. Visite niet meer van toepassing.";
   else dagTekst = `${fmtDag.format(nu).replace(/^./, c => c.toUpperCase())}. Opnamedag ${dag} van 5.`;
   document.getElementById("visiteDag").textContent = dagTekst;
 
@@ -843,11 +871,12 @@ function update() {
   ["rx-sauna", "lysverket"].forEach(id => { const el = document.getElementById("rxstat-" + id); if (el) el.textContent = rxs(id); });
   // Sauna-keuze
   const sx = it("rx-sauna");
-  document.querySelectorAll('input[name="sauna"]').forEach(r => r.checked = r.value === sx.keuze);
+  document.querySelectorAll('input[name="sauna"]').forEach(r => { r.checked = r.value === sx.keuze; });
   const sl = document.getElementById("saunaLinks");
   if (sl) {
     const html = sx.keuze === "sauna"
       ? `<a href="${mapsUrl("Heit Bergen, Thormøhlens gate 53E, 5008 Bergen")}" target="_blank" rel="noopener">Route naar Heit</a><a href="https://heitbergen.no/sauna-info" target="_blank" rel="noopener">Heit boeken</a><a href="https://www.citysauna.no/en" target="_blank" rel="noopener">City Sauna</a><a href="${mapsUrl("City Sauna, Solheimsgaten 3, 5058 Bergen")}" target="_blank" rel="noopener">Route naar City Sauna</a><button class="pill${sx.booked ? " ok" : ""}" data-book="rx-sauna" id="book-rx-sauna">${sx.booked ? "Geboekt" : "Nog niet geboekt; tik als geboekt"}</button>`
+      : sx.keuze === "laugaren" ? `<a href="https://www.openstreetmap.org/?mlat=60.39507&mlon=5.30976#map=17/60.39507/5.30976" target="_blank" rel="noopener">Route naar Laugaren</a><a href="https://www.laugaren.no/" target="_blank" rel="noopener">Laugaren</a><span class="pill ok">Toegediend</span>`
       : sx.keuze === "strand" ? `<a href="${mapsUrl("Nordnes Sjøbad, Nordnesparken 30, 5005 Bergen")}" target="_blank" rel="noopener">Route naar Nordnes</a><a href="https://nordnessjobad.no/apningstider/" target="_blank" rel="noopener">Openingstijden</a>` : "";
     if (sl.dataset.k !== sx.keuze + sx.booked) { sl.dataset.k = sx.keuze + sx.booked; sl.innerHTML = html; }
   }
@@ -863,6 +892,7 @@ function update() {
   document.getElementById("totPct").textContent = t;
   document.getElementById("miniPct").textContent = t + "%";
   document.getElementById("miniBar").style.width = t + "%";
+  ["ontslagBanner", "stOntslagT", "stOntslagD"].forEach(i => document.getElementById(i).hidden = !AFGEROND);
   document.getElementById("fase").textContent = "Fase: " + FASES[f].toLowerCase();
   if (f !== laatsteFase) { laatsteFase = f; document.querySelectorAll("#fig > [data-fase]").forEach(d => d.hidden = +d.dataset.fase !== f); }
 
@@ -873,8 +903,8 @@ function update() {
 function gedaan() {
   return Object.keys(ITEMS).filter(id => it(id).done).sort((a, b) => (it(a).t || 0) - (it(b).t || 0));
 }
-function titel(id) { if (id === "rx-sauna") { const k = it(id).keuze; return k === "strand" ? "Koude zee bij Nordnes (recept 1)" : k === "sauna" ? "Drijvende sauna (recept 1)" : "Warmte en koude (recept 1)"; } if (id === "lysverket") return "Diner bij Lysverket (recept 2)"; return ITEMS[id].title; }
-function wanneer(id) { const t = it(id).t; return t ? fmtKort.format(new Date(t)) : "tijdstip onbekend"; }
+function titel(id) { if (id === "rx-sauna") { const k = it(id).keuze; return k === "laugaren" ? "Drijvende badstu Laugaren (recept 1)" : k === "strand" ? "Koude zee bij Nordnes (recept 1)" : k === "sauna" ? "Drijvende sauna (recept 1)" : "Warmte en koude (recept 1)"; } if (id === "lysverket") return "Diner bij Lysverket (recept 2)"; return ITEMS[id].title; }
+function wanneer(id) { const t = it(id).t; return t ? fmtKort.format(new Date(t)) : AFGEROND ? "tijdens de opname" : "tijdstip onbekend"; }
 function bouwDecursus() {
   const el = document.getElementById("decList"), ids = gedaan();
   const sig = ids.map(id => id + it(id).note + (FOTOS[id] ? FOTOS[id].length : 0)).join("|");
@@ -886,7 +916,7 @@ function bouwDecursus() {
 
 function bouwOntslag(t) {
   const el = document.getElementById("ontslagInhoud"), nu = now(), uiterlijk = osloToDate(ONTSLAG_UITERLIJK);
-  const open = t >= 100 || nu >= uiterlijk;
+  const open = AFGEROND || t >= 100 || nu >= uiterlijk;
   const ids = gedaan();
   const sig = [open, t, ids.map(id => id + it(id).note + (FOTOS[id] ? FOTOS[id].length : 0) + it(id).keuze).join("|"), osloYmd(nu)].join("#");
   if (el.dataset.sig === sig) return;
@@ -897,7 +927,8 @@ function bouwOntslag(t) {
     return;
   }
   const hersteld = t >= 100;
-  const ontslagDatum = hersteld && nu < uiterlijk ? nu : uiterlijk;
+  const ontslagDatum = AFGEROND ? osloToDate(ONTSLAG_DATUM + "T12:00") : hersteld && nu < uiterlijk ? nu : uiterlijk;
+  if (AFGEROND && hersteld) return eindrapport(el, t, ontslagDatum);
   const nietGedaan = Object.keys(ITEMS).filter(id => !it(id).done);
   const verloop = ids.length ? `<ul>${ids.map(id => `<li><b>${esc(titel(id))}</b> <span class="num" style="color:var(--ink-3);font-size:13px">(${esc(wanneer(id))})</span>${it(id).note ? `<span class="noot">${esc(it(id).note)}</span>` : ""}${FOTOS[id] ? `<div class="fotos"><img src="${FOTOS[id]}" alt="Foto bij ${esc(titel(id))}"></div>` : ""}</li>`).join("")}</ul>` : "<p>Geen behandelingen gedocumenteerd.</p>";
   el.innerHTML = `<h2 class="noprint" style="margin-bottom:12px">Ontslagbrief</h2>
@@ -919,11 +950,54 @@ function bouwOntslag(t) {
   const pb = document.getElementById("printBtn"); if (pb) pb.onclick = () => window.print();
 }
 
+// Klinisch beloop per orgaansysteem, voor de definitieve ontslagbrief.
+const BELOOP = {
+  hart: "Hartfunctie hersteld. Sinusritme, met een fysiologische frequentiestijging aan de raamtafel van Lysverket (recept 2, vrijdag 23 oktober); bij het dessert passend bij de setting en niet behandelbehoeftig.",
+  longen: "Inspanningstolerantie goed. Fløyen is te voet beklommen, zonder kabelbaan; de saturatie bleef ondanks de klim en het uitzicht op peil. Ruim voldoende frisse lucht op hoogte.",
+  maag: "Intake hersteld met lokale voeding. De hotdog is conform voorschrift eenmalig toegediend. Geen dyspeptische klachten; een voedingsinterventie met aantoonbaar effect, analoog aan de butter chicken bij de referentiepatiënt.",
+  zenuw: "Recept 1 toegediend in Laugaren, de drijvende badstu bij USF Verftet: warmte, gevolgd door koude in het fjordwater. Sympathische tonus daarna duidelijk verlaagd; parasympathisch overwicht tot in de avond.",
+  geheugen: "Nieuwe herinneringen aangelegd en geconsolideerd. Stemming euthym tot opgewekt; geen tekenen van terugval naar het beeld van augustus.",
+};
+function eindrapport(el, t, ontslagDatum) {
+  const d = fmtDatum.format(ontslagDatum);
+  const lijst = s => `<ul>${s.items.map(id => `<li><b>${esc(titel(id))}</b>${it(id).note ? `<span class="noot">${esc(it(id).note)}</span>` : ""}${FOTOS[id] ? `<div class="fotos"><img src="${FOTOS[id]}" alt="Foto bij ${esc(titel(id))}"></div>` : ""}</li>`).join("")}</ul>`;
+  const controle = CONTROLE_DATUM ? fmtDag.format(osloToDate(CONTROLE_DATUM + "T12:00")) + " " + CONTROLE_DATUM.slice(0, 4) : "datum nader te bepalen";
+  el.innerHTML = `<h2 class="noprint" style="margin-bottom:12px">Ontslagbrief</h2>
+  <div class="brief" id="brief">
+    <div class="briefhead"><div><b>Ziekenhuis Vestland</b>Afdeling Interne geneeskunde</div><div class="num">Bergen, ${esc(d)}</div></div>
+    <dl class="meta">
+      <dt>Aan</dt><dd>De huisarts van Bergen</dd>
+      <dt>Betreft</dt><dd>Bergen, geb. 1070, patiëntnr. 1070-5003-NO</dd>
+      <dt>Opname</dt><dd class="num">20-10-2026</dd>
+      <dt>Ontslag</dt><dd class="num">${esc(d)}</dd>
+      <dt>Beh. arts</dt><dd>Tess</dd>
+      <dt>Assistent</dt><dd>Niels</dd>
+    </dl>
+    <p style="margin-top:14px">Geachte collega,</p>
+    <p style="margin-top:6px">Hierbij bericht ik u over bovengenoemde patiënt, die van 20-10-2026 tot en met ${esc(d)} op onze afdeling was opgenomen ter observatie en behandeling.</p>
+    <h4>Reden van opname</h4><p>Aanhoudend tekort aan dates, bestaand sinds augustus, met geleidelijke toename van de klachten in de avonduren.</p>
+    <h4>Diagnose</h4><p><b>Anerosis bergensis</b> (fictieve aandoening). Nevenbevinding: chronisch regenachtig klimaat, aanwezig sinds 1070; niet behandeld en niet behandelbaar.</p>
+    <h4>Beloop per orgaansysteem</h4>
+    <p>Behandeling volgens plan, gespreid over vijf orgaansystemen. Therapietrouw uitstekend. Bijwerkingen: natte schoenen, verder geen.</p>
+    ${SYSTEMEN.map(s => `<div class="sys"><b class="sn">${esc(s.naam)} (<span class="num">${sysPct(s)}%</span>)</b>${lijst(s)}<p>${BELOOP[s.id]}</p></div>`).join("")}
+    <h4>Toestand bij ontslag</h4><p class="oordeel">Klinisch hersteld.</p><p>Totale gezondheid <span class="num">${t}%</span>; alle vijf orgaansystemen op <span class="num">100%</span>. Fase: gezond. Kleur en stemming hersteld; huid nog vochtig, passend bij de locatie.</p>
+    <h4>Medicatie bij ontslag</h4><p>Geen.</p>
+    <h4>Prognose</h4><p>Goed, mits onderhoudsbehandeling. Een recidief is niet uitgesloten nu de behandelend arts is vertrokken. De referentiepatiënt Nijmegen laat zien dat herhaalde interventies door dezelfde behandelend arts een blijvend effect hebben.</p>
+    <h4>Beleid en follow-up</h4><p>Poliklinische controle op ${esc(controle)}. De assistent komt hiervoor naar de behandelend arts toe. Tot die tijd onderhoudsbehandeling op afstand; frequentie naar behoefte.</p>
+    <p class="slot">Patiënt is in goede toestand ontslagen. Het regent er nog steeds; dat was ook niet de indicatie.</p>
+    <p style="margin-top:14px">Met collegiale groet,</p>
+    <div class="handtekening"><div><span class="hand">Tess</span>Tess, behandelend arts</div><div><span class="hand">Niels</span>Niels, assistent</div></div>
+  </div>
+  ${window.claude && typeof window.claude.use === "function" ? "" : `<p class="noprint" style="margin-top:12px"><button class="btn" id="printBtn">Ontslagbrief afdrukken of als PDF bewaren</button></p>`}`;
+  const pb = document.getElementById("printBtn"); if (pb) pb.onclick = () => window.print();
+}
+
 /* ===== Interactie ===== */
 function wijzig(id, fn) { fn(it(id)); saveLocal(); push(id); update(); }
 const noteTimers = {};
 document.addEventListener("change", e => {
   const t = e.target;
+  if (AFGEROND && (t.dataset.cb || t.name === "sauna")) return update(); // afgeronde stand ligt vast
   if (t.dataset.cb) { wijzig(t.dataset.cb, x => { x.done = t.checked; x.t = t.checked ? now().getTime() : 0; }); const ex = document.getElementById("ex-" + t.dataset.cb); if (ex && t.checked) ex.open = true; }
   else if (t.name === "sauna") wijzig("rx-sauna", x => { x.keuze = t.value; });
   else if (t.dataset.foto) fotoLaden(t.files && t.files[0], t.dataset.foto, t);
